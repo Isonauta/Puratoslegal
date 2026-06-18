@@ -16,7 +16,7 @@ function loadSheet(file: string, sheet: string): unknown[][] {
   const wb = XLSX.read(buf, { type: "buffer", cellDates: true });
   const ws = wb.Sheets[sheet];
   if (!ws) throw new Error(`Sheet "${sheet}" not found in ${file}`);
-  return XLSX.utils.sheet_to_json(ws, { header: 1, defaultValue: null }) as unknown[][];
+  return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null }) as unknown[][];
 }
 
 const str = (v: unknown): string | null => {
