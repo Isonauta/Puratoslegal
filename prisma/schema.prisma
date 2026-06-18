@@ -1,0 +1,175 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Ambito {
+  SST
+  MA
+  SGI
+  GENERAL
+}
+
+enum CumpleEstado {
+  SI
+  NO
+  NO_APLICA
+  PENDIENTE
+}
+
+enum EvidenceFileStatus {
+  POR_GENERAR
+  EN_REVISION
+  VIGENTE
+  VENCIDO
+  ACTUALIZAR
+}
+
+enum ActionPlanStatus {
+  ABIERTO
+  EN_CURSO
+  CERRADO
+  VENCIDO
+}
+
+enum StorageProvider {
+  SHAREPOINT
+  GOOGLE_DRIVE
+}
+
+// One row per requisito legal from "Matriz Legal".
+model LegalRequirement {
+  id                 String       @id @default(cuid())
+  numero             Int          @unique // "N°" column, stable business key used for cross-sheet references
+  tipoRequisito      String // Legal / Otro Requisito / ISO
+  tipoDocumento      String // Decreto Supremo, Ley, Resolución, etc.
+  documentoNumero    String? // "N°" of the law/decree itself (e.g. 148, 20949)
+  titulo             String
+  anioPublicacion    Int?
+  organismo          String
+  ambito             Ambito
+  submateria         String?
+  ultimaModificacion String?
+  articulo           String?
+  requisitoTexto     String? // full legal text / "Requisito Aplica" column
+  cumple             CumpleEstado @default(PENDIENTE)
+  formaCumplimiento  String?
+  formato            String?
+  herramientas       String?
+  responsable        String?
+  estado             String?
+  riesgo             String?
+  oportunidad        String?
+
+  evidenceLinks EvidenceLink[]
+  actionPlans   ActionPlan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ambito])
+}
+
+// One row per documento from "Evidencias Generables". Defines WHAT evidence
+// should exist; the actual uploaded/linked file lives in EvidenceFile.
+model EvidenceTemplate {
+  id             String  @id @default(cuid())
+  codigoSugerido String  @unique // e.g. "R-SST-Contrat-01"
+  nombre         String
+  tipoEvidencia  String // Procedimiento, Registro / Formato, Programa, etc.
+  normativa      String?
+  ambito         Ambito?
+  submateria     String?
+  descripcion    String?
+
+  evidenceLinks EvidenceLink[]
+  files         EvidenceFile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Bridge table: a LegalRequirement can be satisfied by several
+// EvidenceTemplates and vice-versa (matriz N° lists like "2, 35, 120-124"
+// are expanded into one row per individual requirement number).
+model EvidenceLink {
+  id                 String           @id @default(cuid())
+  legalRequirement   LegalRequirement @relation(fields: [legalRequirementId], references: [id], onDelete: Cascade)
+  legalRequirementId String
+  evidenceTemplate   EvidenceTemplate @relation(fields: [evidenceTemplateId], references: [id], onDelete: Cascade)
+  evidenceTemplateId String
+
+  @@unique([legalRequirementId, evidenceTemplateId])
+}
+
+// One row per "Permisos y Autorizaciones" item.
+model Permit {
+  id                         String    @id @default(cuid())
+  numero                     Int       @unique
+  categoria                  String
+  nombre                     String
+  organismoEmisor            String
+  baseLegal                  String?
+  instalacionAlcance         String?
+  periodicidadVencimiento    String?
+  consecuenciaIncumplimiento String?
+  estadoSugerido             String?
+  proximoVencimiento         DateTime?
+
+  files EvidenceFile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// The actual evidence artifact, linked (not copied) from an external
+// document repository such as SharePoint or Google Drive.
+model EvidenceFile {
+  id         String             @id @default(cuid())
+  status     EvidenceFileStatus @default(POR_GENERAR)
+  provider   StorageProvider
+  externalId String // SharePoint driveItem id / Google Drive file id
+  webUrl     String // link the auditor can open
+  fileName   String?
+  uploadedBy String?
+  validFrom  DateTime?
+  validUntil DateTime?
+
+  evidenceTemplate   EvidenceTemplate? @relation(fields: [evidenceTemplateId], references: [id], onDelete: Cascade)
+  evidenceTemplateId String?
+  permit             Permit?           @relation(fields: [permitId], references: [id], onDelete: Cascade)
+  permitId           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// One row per "Plan de acción" item: a non-conformity raised against a
+// LegalRequirement that is not currently met, with its corrective action.
+model ActionPlan {
+  id                 String            @id @default(cuid())
+  noConformidad      Int? // "N° NC"
+  // The source "Plan de acción" sheet references the underlying law by
+  // document type/number rather than by the Matriz Legal row "N°", and
+  // some of those laws are no longer present in the current matrix, so
+  // the link to LegalRequirement is best-effort and may be absent.
+  legalRequirement   LegalRequirement? @relation(fields: [legalRequirementId], references: [id], onDelete: SetNull)
+  legalRequirementId String?
+  tipoDocumento      String?
+  documentoNumero    String?
+  titulo             String
+  accionCorrectiva   String
+  responsable        String?
+  fechaEjecucion     DateTime?
+  status             ActionPlanStatus  @default(ABIERTO)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
