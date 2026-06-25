@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
-import type { Ambito } from "@/generated/prisma/enums";
+import type { Ambito, CumpleEstado } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
 
 export type ComplianceByAmbito = {
   ambito: Ambito;
@@ -77,14 +78,46 @@ export async function getEvidenceStatusSummary() {
   return { byTipo: groups, filesByStatus, totalTemplates, templatesWithFile };
 }
 
-export async function getAllRequirements() {
+export type RequirementFilters = {
+  ambito?: Ambito;
+  cumple?: CumpleEstado;
+  evidencia?: "con" | "sin";
+  q?: string;
+};
+
+export async function getAllRequirements(filters: RequirementFilters = {}) {
+  const where: Prisma.LegalRequirementWhereInput = {};
+  if (filters.ambito) where.ambito = filters.ambito;
+  if (filters.cumple) where.cumple = filters.cumple;
+  if (filters.evidencia === "con") where.evidenceLinks = { some: {} };
+  if (filters.evidencia === "sin") where.evidenceLinks = { none: {} };
+  if (filters.q) {
+    const pattern = `%${filters.q}%`;
+    const matches = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "LegalRequirement"
+      WHERE titulo ILIKE ${pattern}
+         OR articulo ILIKE ${pattern}
+         OR "requisitoTexto" ILIKE ${pattern}
+         OR organismo ILIKE ${pattern}
+    `;
+    where.id = { in: matches.map((m) => m.id) };
+  }
+
   return prisma.legalRequirement.findMany({
+    where,
     orderBy: { numero: "asc" },
     include: {
       evidenceLinks: {
         include: { evidenceTemplate: { include: { files: { orderBy: { createdAt: "desc" } } } } },
       },
     },
+  });
+}
+
+export async function getAllActionPlans() {
+  return prisma.actionPlan.findMany({
+    orderBy: [{ status: "asc" }, { fechaEjecucion: "asc" }],
+    include: { legalRequirement: { select: { numero: true, ambito: true, titulo: true } } },
   });
 }
 
