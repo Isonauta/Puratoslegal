@@ -30,9 +30,14 @@ export default async function DashboardPage() {
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Matriz R-110-02 · Puratos
         </p>
-        <Link href="/requisitos" className="mt-3 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400">
-          Gestionar requisitos y evidencia →
-        </Link>
+        <div className="mt-3 flex gap-4">
+          <Link href="/requisitos" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
+            Gestionar requisitos y evidencia →
+          </Link>
+          <Link href="/planes-accion" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
+            Ver planes de acción →
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">
