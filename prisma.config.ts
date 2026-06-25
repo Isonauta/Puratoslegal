@@ -9,6 +9,11 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Migrations need the session pooler (port 5432): it supports the
+    // session-level advisory locks `prisma migrate deploy` takes. Runtime
+    // queries use DATABASE_URL (transaction pooler, port 6543) instead,
+    // see src/lib/db.ts — the session pooler caps concurrent clients at 15,
+    // too few for serverless function instances.
+    url: process.env["MIGRATE_DATABASE_URL"] ?? process.env["DATABASE_URL"],
   },
 });
