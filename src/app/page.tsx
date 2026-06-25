@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ComplianceCard } from "@/components/ComplianceCard";
 import {
   getComplianceByAmbito,
@@ -29,6 +30,9 @@ export default async function DashboardPage() {
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Matriz R-110-02 · Puratos
         </p>
+        <Link href="/requisitos" className="mt-3 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400">
+          Gestionar requisitos y evidencia →
+        </Link>
       </header>
 
       <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">
