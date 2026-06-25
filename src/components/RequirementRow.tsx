@@ -91,15 +91,84 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
       {open && (
         <div className="border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
           {requirement.evidenceLinks.length === 0 && (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin evidencia asociada a este requisito.</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin evidencia asociada a este requisito todavía.</p>
           )}
           <div className="space-y-3">
             {requirement.evidenceLinks.map((link) => (
               <EvidenceTemplateBlock key={link.evidenceTemplate.id} template={link.evidenceTemplate} onChange={() => router.refresh()} />
             ))}
           </div>
+          <NewEvidenceForm legalRequirementId={requirement.id} onChange={() => router.refresh()} />
         </div>
       )}
+    </div>
+  );
+}
+
+function NewEvidenceForm({ legalRequirementId, onChange }: { legalRequirementId: string; onChange: () => void }) {
+  const [adding, setAdding] = useState(false);
+  const [nombre, setNombre] = useState("");
+  const [webUrl, setWebUrl] = useState("");
+  const [provider, setProvider] = useState("SHAREPOINT");
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    if (!nombre.trim() || !webUrl.trim()) return;
+    setBusy(true);
+    await fetch("/api/evidence-files", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ legalRequirementId, nombre: nombre.trim(), webUrl: webUrl.trim(), provider }),
+    });
+    setBusy(false);
+    setNombre("");
+    setWebUrl("");
+    setAdding(false);
+    onChange();
+  }
+
+  if (!adding) {
+    return (
+      <button type="button" onClick={() => setAdding(true)} className="mt-3 text-xs text-blue-600 hover:underline dark:text-blue-400">
+        + Vincular nueva evidencia
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-2 rounded border border-zinc-100 p-3 dark:border-zinc-800">
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="text"
+          placeholder="Nombre (ej. Certificado de cumplimiento)"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          className="min-w-[220px] flex-1 rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+        />
+        <select
+          value={provider}
+          onChange={(e) => setProvider(e.target.value)}
+          className="rounded border border-zinc-300 bg-white px-1 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+        >
+          <option value="SHAREPOINT">SharePoint</option>
+          <option value="GOOGLE_DRIVE">Google Drive</option>
+        </select>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="url"
+          placeholder="https://..."
+          value={webUrl}
+          onChange={(e) => setWebUrl(e.target.value)}
+          className="min-w-[240px] flex-1 rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+        />
+        <button type="button" disabled={busy} onClick={save} className="rounded bg-blue-600 px-2 py-1 text-xs text-white">
+          Guardar
+        </button>
+        <button type="button" onClick={() => setAdding(false)} className="text-xs text-zinc-500">
+          Cancelar
+        </button>
+      </div>
     </div>
   );
 }
