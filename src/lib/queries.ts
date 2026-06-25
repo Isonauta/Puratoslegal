@@ -77,6 +77,17 @@ export async function getEvidenceStatusSummary() {
   return { byTipo: groups, filesByStatus, totalTemplates, templatesWithFile };
 }
 
+export async function getAllRequirements() {
+  return prisma.legalRequirement.findMany({
+    orderBy: { numero: "asc" },
+    include: {
+      evidenceLinks: {
+        include: { evidenceTemplate: { include: { files: { orderBy: { createdAt: "desc" } } } } },
+      },
+    },
+  });
+}
+
 export async function getPermitsNeedingAttention() {
   return prisma.permit.findMany({
     where: {
