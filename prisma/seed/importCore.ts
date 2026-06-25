@@ -38,31 +38,39 @@ async function importLegalRequirements(matriz: Buffer) {
     const numero = num(row[1]);
     if (numero === null) continue;
 
+    // Structural/legal fields always come from the spreadsheet (source of
+    // truth for the matrix itself). `cumple` and `responsable` are excluded
+    // from the update so a reimport never overwrites compliance status the
+    // team has since edited through the app.
+    const fields = {
+      tipoRequisito: str(row[2]) ?? "Legal",
+      tipoDocumento: str(row[3]) ?? "Sin especificar",
+      documentoNumero: str(row[4]),
+      titulo: str(row[5]) ?? "(sin título)",
+      anioPublicacion: num(row[6]),
+      organismo: str(row[7]) ?? "Sin especificar",
+      ambito: normalizeAmbito(str(row[8])),
+      submateria: str(row[9]),
+      ultimaModificacion: str(row[10]),
+      articulo: str(row[11]),
+      requisitoTexto: str(row[12]),
+      formaCumplimiento: str(row[15]),
+      formato: str(row[16]),
+      herramientas: str(row[17]),
+      estado: str(row[19]),
+      riesgo: str(row[20]),
+      oportunidad: str(row[21]),
+    };
+
     await prisma.legalRequirement.upsert({
       where: { numero },
       create: {
         numero,
-        tipoRequisito: str(row[2]) ?? "Legal",
-        tipoDocumento: str(row[3]) ?? "Sin especificar",
-        documentoNumero: str(row[4]),
-        titulo: str(row[5]) ?? "(sin título)",
-        anioPublicacion: num(row[6]),
-        organismo: str(row[7]) ?? "Sin especificar",
-        ambito: normalizeAmbito(str(row[8])),
-        submateria: str(row[9]),
-        ultimaModificacion: str(row[10]),
-        articulo: str(row[11]),
-        requisitoTexto: str(row[12]),
+        ...fields,
         cumple: normalizeCumple(str(row[13])),
-        formaCumplimiento: str(row[15]),
-        formato: str(row[16]),
-        herramientas: str(row[17]),
         responsable: str(row[18]),
-        estado: str(row[19]),
-        riesgo: str(row[20]),
-        oportunidad: str(row[21]),
       },
-      update: {},
+      update: fields,
     });
     count++;
   }
@@ -78,17 +86,18 @@ async function importEvidenceTemplates(evidencias: Buffer) {
     const codigo = str(row[4]);
     if (!codigo) continue;
 
+    const templateFields = {
+      nombre: str(row[5]) ?? codigo,
+      tipoEvidencia: str(row[3]) ?? "Registro / Formato",
+      normativa: str(row[1]),
+      submateria: str(row[2]),
+      descripcion: str(row[6]),
+    };
+
     await prisma.evidenceTemplate.upsert({
       where: { codigoSugerido: codigo },
-      create: {
-        codigoSugerido: codigo,
-        nombre: str(row[5]) ?? codigo,
-        tipoEvidencia: str(row[3]) ?? "Registro / Formato",
-        normativa: str(row[1]),
-        submateria: str(row[2]),
-        descripcion: str(row[6]),
-      },
-      update: {},
+      create: { codigoSugerido: codigo, ...templateFields },
+      update: templateFields,
     });
     count++;
 
@@ -106,20 +115,21 @@ async function importPermits(permisos: Buffer) {
     const numero = num(row[0]);
     if (numero === null) continue;
 
+    const permitFields = {
+      categoria: str(row[1]) ?? "Sin categoría",
+      nombre: str(row[2]) ?? "(sin nombre)",
+      organismoEmisor: str(row[3]) ?? "Sin especificar",
+      baseLegal: str(row[4]),
+      instalacionAlcance: str(row[5]),
+      periodicidadVencimiento: str(row[6]),
+      consecuenciaIncumplimiento: str(row[7]),
+      estadoSugerido: str(row[8]),
+    };
+
     await prisma.permit.upsert({
       where: { numero },
-      create: {
-        numero,
-        categoria: str(row[1]) ?? "Sin categoría",
-        nombre: str(row[2]) ?? "(sin nombre)",
-        organismoEmisor: str(row[3]) ?? "Sin especificar",
-        baseLegal: str(row[4]),
-        instalacionAlcance: str(row[5]),
-        periodicidadVencimiento: str(row[6]),
-        consecuenciaIncumplimiento: str(row[7]),
-        estadoSugerido: str(row[8]),
-      },
-      update: {},
+      create: { numero, ...permitFields },
+      update: permitFields,
     });
     count++;
   }
@@ -212,6 +222,11 @@ async function importActionPlans(matriz: Buffer) {
     const fechaRaw = row[12];
     const fechaEjecucion =
       fechaRaw instanceof Date ? fechaRaw : typeof fechaRaw === "string" && fechaRaw ? new Date(fechaRaw) : null;
+
+    // No natural unique key for this sheet; treat (titulo, accionCorrectiva)
+    // as the identity to avoid duplicating rows on a reimport.
+    const existing = await prisma.actionPlan.findFirst({ where: { titulo, accionCorrectiva } });
+    if (existing) continue;
 
     await prisma.actionPlan.create({
       data: {
