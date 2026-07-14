@@ -84,28 +84,88 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Requisitos incumplidos ({overall.noCumple})
-            </h2>
-            <ul className="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
-              {nonCompliant.length === 0 && (
-                <li className="py-3 text-sm text-zinc-500">Sin incumplimientos registrados.</li>
-              )}
-              {nonCompliant.map((r) => (
-                <li key={r.id} className="py-3">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                    N°{r.numero} · {r.ambito} — {r.titulo}
-                  </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {r.organismo} · Responsable: {r.responsable ?? "Sin asignar"}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Evidencia — sección destacada */}
+        <section>
+          <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex items-start justify-between gap-6">
+              <div>
+                <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Evidencia documental
+                </h2>
+                <p className="mt-1 text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+                  {evidence.templatesWithFile}
+                  <span className="ml-1 text-base font-normal text-zinc-400">/ {evidence.totalTemplates} plantillas con archivo</span>
+                </p>
+              </div>
+              {evidence.filesByStatus.length > 0 && (() => {
+                const total = evidence.filesByStatus.reduce((s, f) => s + f._count, 0);
+                const vigente = evidence.filesByStatus.find(f => f.status === "VIGENTE")?._count ?? 0;
+                return (
+                  <div className="text-right">
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Archivos vigentes</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                      {total > 0 ? Math.round((vigente / total) * 100) : 0}%
+                    </p>
+                    <p className="text-xs text-zinc-400">{vigente} de {total} archivos</p>
+                  </div>
+                );
+              })()}
+            </div>
 
+            {evidence.filesByStatus.length > 0 && (() => {
+              const total = evidence.filesByStatus.reduce((s, f) => s + f._count, 0);
+              const order = ["VIGENTE", "EN_REVISION", "POR_GENERAR", "ACTUALIZAR", "VENCIDO"];
+              const label: Record<string, string> = {
+                VIGENTE: "Vigente",
+                EN_REVISION: "En revisión",
+                POR_GENERAR: "Por generar",
+                ACTUALIZAR: "Actualizar",
+                VENCIDO: "Vencido",
+              };
+              const color: Record<string, string> = {
+                VIGENTE: "bg-green-500",
+                EN_REVISION: "bg-blue-400",
+                POR_GENERAR: "bg-amber-400",
+                ACTUALIZAR: "bg-orange-400",
+                VENCIDO: "bg-red-500",
+              };
+              const textColor: Record<string, string> = {
+                VIGENTE: "text-green-700 dark:text-green-400",
+                EN_REVISION: "text-blue-700 dark:text-blue-400",
+                POR_GENERAR: "text-amber-700 dark:text-amber-400",
+                ACTUALIZAR: "text-orange-700 dark:text-orange-400",
+                VENCIDO: "text-red-700 dark:text-red-400",
+              };
+              const sorted = [...evidence.filesByStatus].sort(
+                (a, b) => order.indexOf(a.status) - order.indexOf(b.status)
+              );
+              return (
+                <div className="mt-5 grid grid-cols-2 gap-4 border-t border-zinc-100 pt-4 dark:border-zinc-800 sm:grid-cols-3 lg:grid-cols-5">
+                  {order.map((status) => {
+                    const entry = sorted.find(f => f.status === status);
+                    const count = entry?._count ?? 0;
+                    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                    return (
+                      <div key={status} className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`inline-block h-2 w-2 rounded-full ${color[status]}`} />
+                          <span className={`text-xs font-medium ${textColor[status]}`}>{label[status]}</span>
+                        </div>
+                        <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{count}</p>
+                        <div className="h-1 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
+                          <div className={`h-1 rounded-full ${color[status]}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <p className="text-xs text-zinc-400">{pct}%</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Planes de acción abiertos ({actionPlans.length})
@@ -126,82 +186,6 @@ export default async function DashboardPage() {
               ))}
             </ul>
           </div>
-        </section>
-
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Evidencia documental
-            </h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-              {evidence.templatesWithFile} de {evidence.totalTemplates} plantillas tienen al menos un archivo
-              vinculado.
-            </p>
-
-            {/* Estado de archivos de evidencia */}
-            {evidence.filesByStatus.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-                  Estado de archivos
-                </p>
-                {(() => {
-                  const total = evidence.filesByStatus.reduce((s, f) => s + f._count, 0);
-                  const order = ["VIGENTE", "EN_REVISION", "POR_GENERAR", "ACTUALIZAR", "VENCIDO"];
-                  const label: Record<string, string> = {
-                    VIGENTE: "Vigente",
-                    EN_REVISION: "En revisión",
-                    POR_GENERAR: "Por generar",
-                    ACTUALIZAR: "Actualizar",
-                    VENCIDO: "Vencido",
-                  };
-                  const color: Record<string, string> = {
-                    VIGENTE: "bg-green-500",
-                    EN_REVISION: "bg-blue-400",
-                    POR_GENERAR: "bg-amber-400",
-                    ACTUALIZAR: "bg-orange-400",
-                    VENCIDO: "bg-red-500",
-                  };
-                  const textColor: Record<string, string> = {
-                    VIGENTE: "text-green-700 dark:text-green-400",
-                    EN_REVISION: "text-blue-700 dark:text-blue-400",
-                    POR_GENERAR: "text-amber-700 dark:text-amber-400",
-                    ACTUALIZAR: "text-orange-700 dark:text-orange-400",
-                    VENCIDO: "text-red-700 dark:text-red-400",
-                  };
-                  const sorted = [...evidence.filesByStatus].sort(
-                    (a, b) => order.indexOf(a.status) - order.indexOf(b.status)
-                  );
-                  return sorted.map((f) => (
-                    <div key={f.status}>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className={`font-medium ${textColor[f.status] ?? "text-zinc-600"}`}>
-                          {label[f.status] ?? f.status}
-                        </span>
-                        <span className="text-zinc-500 dark:text-zinc-400">
-                          {f._count} · {total > 0 ? Math.round((f._count / total) * 100) : 0}%
-                        </span>
-                      </div>
-                      <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
-                        <div
-                          className={`h-1.5 rounded-full ${color[f.status] ?? "bg-zinc-400"}`}
-                          style={{ width: total > 0 ? `${(f._count / total) * 100}%` : "0%" }}
-                        />
-                      </div>
-                    </div>
-                  ));
-                })()}
-              </div>
-            )}
-
-            <ul className="mt-4 space-y-1 border-t border-zinc-100 pt-3 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
-              {evidence.byTipo.map((t) => (
-                <li key={t.tipoEvidencia} className="flex justify-between">
-                  <span>{t.tipoEvidencia}</span>
-                  <span className="font-medium">{t._count}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
 
           <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
@@ -218,6 +202,30 @@ export default async function DashboardPage() {
               ))}
             </ul>
           </div>
+        </section>
+
+        {/* Requisitos incumplidos — referencia secundaria */}
+        <section>
+          <details className="rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <summary className="cursor-pointer px-5 py-4 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Requisitos incumplidos ({overall.noCumple}) — ver detalle
+            </summary>
+            <ul className="divide-y divide-zinc-100 px-5 pb-4 dark:divide-zinc-800">
+              {nonCompliant.length === 0 && (
+                <li className="py-3 text-sm text-zinc-500">Sin incumplimientos registrados.</li>
+              )}
+              {nonCompliant.map((r) => (
+                <li key={r.id} className="py-3">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                    N°{r.numero} · {r.ambito} — {r.titulo}
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {r.organismo} · Responsable: {r.responsable ?? "Sin asignar"}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </details>
         </section>
       </main>
     </div>
