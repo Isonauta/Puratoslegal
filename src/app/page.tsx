@@ -137,7 +137,63 @@ export default async function DashboardPage() {
               {evidence.templatesWithFile} de {evidence.totalTemplates} plantillas tienen al menos un archivo
               vinculado.
             </p>
-            <ul className="mt-3 space-y-1 text-sm text-zinc-600 dark:text-zinc-300">
+
+            {/* Estado de archivos de evidencia */}
+            {evidence.filesByStatus.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                  Estado de archivos
+                </p>
+                {(() => {
+                  const total = evidence.filesByStatus.reduce((s, f) => s + f._count, 0);
+                  const order = ["VIGENTE", "EN_REVISION", "POR_GENERAR", "ACTUALIZAR", "VENCIDO"];
+                  const label: Record<string, string> = {
+                    VIGENTE: "Vigente",
+                    EN_REVISION: "En revisión",
+                    POR_GENERAR: "Por generar",
+                    ACTUALIZAR: "Actualizar",
+                    VENCIDO: "Vencido",
+                  };
+                  const color: Record<string, string> = {
+                    VIGENTE: "bg-green-500",
+                    EN_REVISION: "bg-blue-400",
+                    POR_GENERAR: "bg-amber-400",
+                    ACTUALIZAR: "bg-orange-400",
+                    VENCIDO: "bg-red-500",
+                  };
+                  const textColor: Record<string, string> = {
+                    VIGENTE: "text-green-700 dark:text-green-400",
+                    EN_REVISION: "text-blue-700 dark:text-blue-400",
+                    POR_GENERAR: "text-amber-700 dark:text-amber-400",
+                    ACTUALIZAR: "text-orange-700 dark:text-orange-400",
+                    VENCIDO: "text-red-700 dark:text-red-400",
+                  };
+                  const sorted = [...evidence.filesByStatus].sort(
+                    (a, b) => order.indexOf(a.status) - order.indexOf(b.status)
+                  );
+                  return sorted.map((f) => (
+                    <div key={f.status}>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={`font-medium ${textColor[f.status] ?? "text-zinc-600"}`}>
+                          {label[f.status] ?? f.status}
+                        </span>
+                        <span className="text-zinc-500 dark:text-zinc-400">
+                          {f._count} · {total > 0 ? Math.round((f._count / total) * 100) : 0}%
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
+                        <div
+                          className={`h-1.5 rounded-full ${color[f.status] ?? "bg-zinc-400"}`}
+                          style={{ width: total > 0 ? `${(f._count / total) * 100}%` : "0%" }}
+                        />
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            )}
+
+            <ul className="mt-4 space-y-1 border-t border-zinc-100 pt-3 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
               {evidence.byTipo.map((t) => (
                 <li key={t.tipoEvidencia} className="flex justify-between">
                   <span>{t.tipoEvidencia}</span>
