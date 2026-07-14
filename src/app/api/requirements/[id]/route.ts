@@ -24,10 +24,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const updated = await prisma.legalRequirement.update({ where: { id }, data });
 
-  // Cuando se guarda justificación de No aplica, propagar a todos los requisitos
-  // que comparten al menos una plantilla de evidencia con este.
-  if (data.justificacionNoAplica && (data.cumple === "NO_APLICA" || updated.cumple === "NO_APLICA")) {
-    // Obtener los evidenceTemplateIds vinculados a este requisito
+  // Propagar cambios a todos los requisitos que comparten evidencia con este
+  const shouldPropagate = data.cumple !== undefined || data.justificacionNoAplica !== undefined;
+  if (shouldPropagate) {
     const links = await prisma.evidenceLink.findMany({
       where: { legalRequirementId: id },
       select: { evidenceTemplateId: true },
@@ -35,7 +34,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const templateIds = links.map((l) => l.evidenceTemplateId);
 
     if (templateIds.length > 0) {
-      // Encontrar todos los otros requisitos que comparten esas plantillas
       const siblings = await prisma.evidenceLink.findMany({
         where: {
           evidenceTemplateId: { in: templateIds },
@@ -47,12 +45,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const siblingIds = siblings.map((s) => s.legalRequirementId);
 
       if (siblingIds.length > 0) {
+        const propagate: { cumple?: CumpleEstado; justificacionNoAplica?: string | null } = {};
+        if (data.cumple !== undefined) propagate.cumple = data.cumple;
+        if (data.justificacionNoAplica !== undefined) propagate.justificacionNoAplica = data.justificacionNoAplica;
+        // Si cambia de NO_APLICA a otro estado, limpiar la justificación en los hermanos también
+        if (data.cumple !== undefined && data.cumple !== "NO_APLICA") propagate.justificacionNoAplica = null;
+
         await prisma.legalRequirement.updateMany({
           where: { id: { in: siblingIds } },
-          data: {
-            cumple: "NO_APLICA",
-            justificacionNoAplica: data.justificacionNoAplica,
-          },
+          data: propagate,
         });
       }
     }
