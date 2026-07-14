@@ -233,7 +233,8 @@ function EvidenceTemplateBlock({ template, onChange }: { template: EvidenceTempl
   return (
     <div className="rounded border border-zinc-100 p-3 dark:border-zinc-800">
       <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-        {template.codigoSugerido} — {template.nombre}
+        {template.codigoSugerido}
+        {template.nombre && template.nombre !== template.codigoSugerido && ` — ${template.nombre}`}
       </p>
 
       <ul className="mt-2 space-y-1">
