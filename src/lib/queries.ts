@@ -171,6 +171,23 @@ export async function getResponsablesSummary() {
   return results;
 }
 
+export async function getRequirementsNeedingActionPlan() {
+  // Requisitos que no cumplen o que cumplen sin evidencia, y aún no tienen plan abierto
+  const [noCumple, sinEvidencia] = await Promise.all([
+    prisma.legalRequirement.findMany({
+      where: { cumple: "NO" },
+      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true },
+      orderBy: { numero: "asc" },
+    }),
+    prisma.legalRequirement.findMany({
+      where: { cumple: "SI", evidenceLinks: { none: {} } },
+      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true },
+      orderBy: { numero: "asc" },
+    }),
+  ]);
+  return { noCumple, sinEvidencia };
+}
+
 export async function getPermitsNeedingAttention() {
   return prisma.permit.findMany({
     where: {
