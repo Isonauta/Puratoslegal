@@ -23,5 +23,40 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const updated = await prisma.legalRequirement.update({ where: { id }, data });
+
+  // Cuando se guarda justificación de No aplica, propagar a todos los requisitos
+  // que comparten al menos una plantilla de evidencia con este.
+  if (data.justificacionNoAplica && (data.cumple === "NO_APLICA" || updated.cumple === "NO_APLICA")) {
+    // Obtener los evidenceTemplateIds vinculados a este requisito
+    const links = await prisma.evidenceLink.findMany({
+      where: { legalRequirementId: id },
+      select: { evidenceTemplateId: true },
+    });
+    const templateIds = links.map((l) => l.evidenceTemplateId);
+
+    if (templateIds.length > 0) {
+      // Encontrar todos los otros requisitos que comparten esas plantillas
+      const siblings = await prisma.evidenceLink.findMany({
+        where: {
+          evidenceTemplateId: { in: templateIds },
+          legalRequirementId: { not: id },
+        },
+        select: { legalRequirementId: true },
+        distinct: ["legalRequirementId"],
+      });
+      const siblingIds = siblings.map((s) => s.legalRequirementId);
+
+      if (siblingIds.length > 0) {
+        await prisma.legalRequirement.updateMany({
+          where: { id: { in: siblingIds } },
+          data: {
+            cumple: "NO_APLICA",
+            justificacionNoAplica: data.justificacionNoAplica,
+          },
+        });
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true, requirement: updated });
 }

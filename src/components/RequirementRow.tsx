@@ -133,20 +133,25 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
             <div className="mb-3 rounded border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
               <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">Justificación de No aplica</p>
               <textarea
-                rows={2}
+                rows={3}
                 placeholder="Ej: La empresa no cuenta con trabajadores en régimen de teletrabajo…"
                 value={justificacion}
                 onChange={(e) => setJustificacion(e.target.value)}
                 className="w-full rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
               />
-              <button
-                type="button"
-                disabled={savingJustificacion}
-                onClick={saveJustificacion}
-                className="mt-1 rounded bg-zinc-700 px-2 py-1 text-xs text-white hover:bg-zinc-600 disabled:opacity-50 dark:bg-zinc-600"
-              >
-                {savingJustificacion ? "Guardando…" : "Guardar justificación"}
-              </button>
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  disabled={savingJustificacion || !justificacion.trim()}
+                  onClick={saveJustificacion}
+                  className="rounded bg-zinc-700 px-2 py-1 text-xs text-white hover:bg-zinc-600 disabled:opacity-50 dark:bg-zinc-600"
+                >
+                  {savingJustificacion ? "Guardando…" : "Guardar justificación"}
+                </button>
+                <p className="text-xs text-zinc-400">
+                  Se aplicará automáticamente a todos los artículos que comparten la misma evidencia.
+                </p>
+              </div>
             </div>
           )}
           {requirement.evidenceLinks.length === 0 && cumple !== "NO_APLICA" && (
