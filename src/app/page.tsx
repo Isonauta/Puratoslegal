@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ComplianceCard } from "@/components/ComplianceCard";
+import { LogoutButton } from "@/components/LogoutButton";
+import { getSession } from "@/lib/auth";
 import {
   getComplianceByAmbito,
   getEvidenceStatusSummary,
@@ -12,6 +14,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const session = await getSession();
   const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits] = await Promise.all([
     getComplianceByAmbito(),
     getOverallCompliance(),
@@ -30,13 +33,17 @@ export default async function DashboardPage() {
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Matriz R-110-02 · Puratos
         </p>
-        <div className="mt-3 flex gap-4">
+        <div className="mt-3 flex items-center gap-4">
           <Link href="/requisitos" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
             Gestionar requisitos y evidencia →
           </Link>
           <Link href="/planes-accion" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
             Ver planes de acción →
           </Link>
+          <span className="ml-auto text-sm text-zinc-500 dark:text-zinc-400">
+            {session?.name}
+          </span>
+          <LogoutButton />
         </div>
       </header>
 
