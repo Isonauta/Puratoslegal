@@ -29,6 +29,13 @@ const USERS: { email: string; name: string; responsable: string | null; isAdmin:
     hash: "$2b$12$/nyNqF2z.AOJYOIzjMEw0uiasCJDrXtpWzeVdiLCTDkRYVA/oS1/C",
   },
   {
+    email: "cneumannlatorre@puratos.com",
+    name: "Carlos Neumann",
+    responsable: null,
+    isAdmin: true,
+    hash: "$2b$12$jhavcaiMv3wsfCKOFaoqT.w2HrSQglKm4p8U27mpNnxlwfDfCftY.",
+  },
+  {
     email: "cristian@cristiancordero.cl",
     name: "Cristián Cordero",
     responsable: null,
