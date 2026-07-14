@@ -201,6 +201,19 @@ function EvidenceTemplateBlock({ template, onChange }: { template: EvidenceTempl
   const [webUrl, setWebUrl] = useState("");
   const [provider, setProvider] = useState("SHAREPOINT");
   const [busy, setBusy] = useState(false);
+  const [editingNombre, setEditingNombre] = useState(false);
+  const [nombre, setNombre] = useState(template.nombre);
+
+  async function saveNombre() {
+    if (!nombre.trim() || nombre === template.nombre) { setEditingNombre(false); return; }
+    await fetch(`/api/evidence-templates/${template.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: nombre.trim() }),
+    });
+    setEditingNombre(false);
+    onChange();
+  }
 
   async function addFile() {
     if (!webUrl.trim()) return;
@@ -232,10 +245,27 @@ function EvidenceTemplateBlock({ template, onChange }: { template: EvidenceTempl
 
   return (
     <div className="rounded border border-zinc-100 p-3 dark:border-zinc-800">
-      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-        {template.codigoSugerido}
-        {template.nombre && template.nombre !== template.codigoSugerido && ` — ${template.nombre}`}
-      </p>
+      <div className="flex items-center gap-2">
+        {editingNombre ? (
+          <>
+            <input
+              autoFocus
+              type="text"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              onBlur={saveNombre}
+              onKeyDown={(e) => { if (e.key === "Enter") saveNombre(); if (e.key === "Escape") setEditingNombre(false); }}
+              className="flex-1 rounded border border-blue-400 px-2 py-0.5 text-sm dark:border-blue-600 dark:bg-zinc-800 dark:text-zinc-100"
+            />
+          </>
+        ) : (
+          <button type="button" onClick={() => setEditingNombre(true)} className="text-left text-sm font-medium text-zinc-800 hover:text-blue-600 dark:text-zinc-100 dark:hover:text-blue-400" title="Clic para editar nombre">
+            {template.codigoSugerido}
+            {nombre && nombre !== template.codigoSugerido && ` — ${nombre}`}
+            <span className="ml-1 text-xs text-zinc-400">✎</span>
+          </button>
+        )}
+      </div>
 
       <ul className="mt-2 space-y-1">
         {template.files.map((f) => (
