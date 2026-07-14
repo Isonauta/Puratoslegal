@@ -39,6 +39,13 @@ const CUMPLE_LABEL: Record<string, string> = {
 const STATUS_OPTIONS = ["POR_GENERAR", "EN_REVISION", "VIGENTE", "VENCIDO", "ACTUALIZAR"];
 export const RESPONSABLES = ["Sebastián Corrotea", "Benjamín Henriquez"];
 
+const CUMPLE_BG: Record<string, string> = {
+  SI:        "border-green-200  bg-green-50  dark:border-green-900  dark:bg-green-950/40",
+  PENDIENTE: "border-amber-200  bg-amber-50  dark:border-amber-900  dark:bg-amber-950/40",
+  NO:        "border-red-200    bg-red-50    dark:border-red-900    dark:bg-red-950/40",
+  NO_APLICA: "border-zinc-200   bg-zinc-50   dark:border-zinc-800   dark:bg-zinc-900",
+};
+
 export function RequirementRow({ requirement }: { requirement: Requirement }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -76,7 +83,7 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <div className={`rounded-lg border shadow-sm transition-colors ${CUMPLE_BG[cumple] ?? CUMPLE_BG.PENDIENTE}`}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
