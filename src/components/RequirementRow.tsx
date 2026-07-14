@@ -36,23 +36,34 @@ const CUMPLE_LABEL: Record<string, string> = {
   PENDIENTE: "Pendiente",
 };
 const STATUS_OPTIONS = ["POR_GENERAR", "EN_REVISION", "VIGENTE", "VENCIDO", "ACTUALIZAR"];
+export const RESPONSABLES = ["Sebastián Corrotea", "Benjamín Henriquez"];
 
 export function RequirementRow({ requirement }: { requirement: Requirement }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [cumple, setCumple] = useState(requirement.cumple);
+  const [responsable, setResponsable] = useState(requirement.responsable ?? "");
   const [saving, setSaving] = useState(false);
 
-  async function updateCumple(value: string) {
-    setCumple(value);
+  async function updateField(data: { cumple?: string; responsable?: string | null }) {
     setSaving(true);
     await fetch(`/api/requirements/${requirement.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cumple: value }),
+      body: JSON.stringify(data),
     });
     setSaving(false);
     router.refresh();
+  }
+
+  async function updateCumple(value: string) {
+    setCumple(value);
+    await updateField({ cumple: value });
+  }
+
+  async function updateResponsable(value: string) {
+    setResponsable(value);
+    await updateField({ responsable: value || null });
   }
 
   return (
@@ -71,6 +82,18 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <select
+            value={responsable}
+            disabled={saving}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => updateResponsable(e.target.value)}
+            className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+          >
+            <option value="">Sin asignar</option>
+            {RESPONSABLES.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
           <select
             value={cumple}
             disabled={saving}

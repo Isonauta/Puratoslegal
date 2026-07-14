@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { RESPONSABLES } from "./RequirementRow";
 
 type ActionPlan = {
   id: string;
@@ -31,15 +32,15 @@ const STATUS_COLOR: Record<string, string> = {
 export function ActionPlanRow({ plan }: { plan: ActionPlan }) {
   const router = useRouter();
   const [status, setStatus] = useState(plan.status);
+  const [responsable, setResponsable] = useState(plan.responsable ?? "");
   const [saving, setSaving] = useState(false);
 
-  async function updateStatus(value: string) {
-    setStatus(value);
+  async function patch(data: object) {
     setSaving(true);
     await fetch(`/api/action-plans/${plan.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: value }),
+      body: JSON.stringify(data),
     });
     setSaving(false);
     router.refresh();
@@ -48,7 +49,7 @@ export function ActionPlanRow({ plan }: { plan: ActionPlan }) {
   return (
     <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
             {plan.noConformidad ? `NC N°${plan.noConformidad} · ` : ""}
             {plan.titulo}
@@ -60,19 +61,31 @@ export function ActionPlanRow({ plan }: { plan: ActionPlan }) {
             </p>
           )}
           <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{plan.accionCorrectiva}</p>
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Responsable: {plan.responsable ?? "Sin asignar"}
-            {plan.fechaEjecucion && ` · Fecha ejecución: ${new Date(plan.fechaEjecucion).toLocaleDateString("es-CL")}`}
-          </p>
+          {plan.fechaEjecucion && (
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Fecha ejecución: {new Date(plan.fechaEjecucion).toLocaleDateString("es-CL")}
+            </p>
+          )}
         </div>
         <div className="flex flex-col items-end gap-2">
           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLOR[status]}`}>
             {STATUS_LABEL[status]}
           </span>
           <select
+            value={responsable}
+            disabled={saving}
+            onChange={(e) => { setResponsable(e.target.value); patch({ responsable: e.target.value || null }); }}
+            className="rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          >
+            <option value="">Sin asignar</option>
+            {RESPONSABLES.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          <select
             value={status}
             disabled={saving}
-            onChange={(e) => updateStatus(e.target.value)}
+            onChange={(e) => { setStatus(e.target.value); patch({ status: e.target.value }); }}
             className="rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           >
             {STATUS_OPTIONS.map((s) => (
