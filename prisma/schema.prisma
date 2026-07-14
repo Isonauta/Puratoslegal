@@ -63,10 +63,11 @@ model LegalRequirement {
   formaCumplimiento  String?
   formato            String?
   herramientas       String?
-  responsable        String?
-  estado             String?
-  riesgo             String?
-  oportunidad        String?
+  responsable              String?
+  estado                   String?
+  riesgo                   String?
+  oportunidad              String?
+  justificacionNoAplica    String?
 
   evidenceLinks EvidenceLink[]
   actionPlans   ActionPlan[]

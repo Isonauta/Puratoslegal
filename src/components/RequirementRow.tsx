@@ -25,6 +25,7 @@ type Requirement = {
   ambito: string;
   cumple: string;
   responsable: string | null;
+  justificacionNoAplica: string | null;
   evidenceLinks: { evidenceTemplate: EvidenceTemplate }[];
 };
 
@@ -43,9 +44,11 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
   const [open, setOpen] = useState(false);
   const [cumple, setCumple] = useState(requirement.cumple);
   const [responsable, setResponsable] = useState(requirement.responsable ?? "");
+  const [justificacion, setJustificacion] = useState(requirement.justificacionNoAplica ?? "");
+  const [savingJustificacion, setSavingJustificacion] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  async function updateField(data: { cumple?: string; responsable?: string | null }) {
+  async function updateField(data: { cumple?: string; responsable?: string | null; justificacionNoAplica?: string | null }) {
     setSaving(true);
     await fetch(`/api/requirements/${requirement.id}`, {
       method: "PATCH",
@@ -64,6 +67,12 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
   async function updateResponsable(value: string) {
     setResponsable(value);
     await updateField({ responsable: value || null });
+  }
+
+  async function saveJustificacion() {
+    setSavingJustificacion(true);
+    await updateField({ justificacionNoAplica: justificacion.trim() || null });
+    setSavingJustificacion(false);
   }
 
   return (
@@ -113,7 +122,27 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
 
       {open && (
         <div className="border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          {requirement.evidenceLinks.length === 0 && (
+          {cumple === "NO_APLICA" && (
+            <div className="mb-3 rounded border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
+              <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">Justificación de No aplica</p>
+              <textarea
+                rows={2}
+                placeholder="Ej: La empresa no cuenta con trabajadores en régimen de teletrabajo…"
+                value={justificacion}
+                onChange={(e) => setJustificacion(e.target.value)}
+                className="w-full rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+              <button
+                type="button"
+                disabled={savingJustificacion}
+                onClick={saveJustificacion}
+                className="mt-1 rounded bg-zinc-700 px-2 py-1 text-xs text-white hover:bg-zinc-600 disabled:opacity-50 dark:bg-zinc-600"
+              >
+                {savingJustificacion ? "Guardando…" : "Guardar justificación"}
+              </button>
+            </div>
+          )}
+          {requirement.evidenceLinks.length === 0 && cumple !== "NO_APLICA" && (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin evidencia asociada a este requisito todavía.</p>
           )}
           <div className="space-y-3">

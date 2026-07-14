@@ -143,20 +143,29 @@ export async function getTasksByResponsable(responsable: string) {
 
 const KNOWN_RESPONSABLES = ["Sebastián Corrotea", "Benjamín Henriquez"];
 
+const REQ_SUMMARY_SELECT = { id: true, numero: true, titulo: true, ambito: true, cumple: true } as const;
+
 export async function getResponsablesSummary() {
   const results = await Promise.all(
     KNOWN_RESPONSABLES.map(async (resp) => {
-      const [total, cumpleConEvidencia, cumpleSinEvidencia, pendiente, noCumple, sinEvidencia] = await Promise.all([
+      const [total, cumpleConEvidencia, itemsSinEvidencia, itemsPendiente, itemsNoCumple] = await Promise.all([
         prisma.legalRequirement.count({ where: { responsable: resp } }),
-        // Cumple real: marcado SI y tiene al menos un archivo de evidencia
         prisma.legalRequirement.count({ where: { responsable: resp, cumple: "SI", evidenceLinks: { some: { evidenceTemplate: { files: { some: {} } } } } } }),
-        // Cumple declarado pero sin respaldo documental — riesgo auditoría
-        prisma.legalRequirement.count({ where: { responsable: resp, cumple: "SI", evidenceLinks: { none: {} } } }),
-        prisma.legalRequirement.count({ where: { responsable: resp, cumple: "PENDIENTE" } }),
-        prisma.legalRequirement.count({ where: { responsable: resp, cumple: "NO" } }),
-        prisma.legalRequirement.count({ where: { responsable: resp, evidenceLinks: { none: {} } } }),
+        prisma.legalRequirement.findMany({ where: { responsable: resp, cumple: "SI", evidenceLinks: { none: {} } }, select: REQ_SUMMARY_SELECT, orderBy: { numero: "asc" } }),
+        prisma.legalRequirement.findMany({ where: { responsable: resp, cumple: "PENDIENTE" }, select: REQ_SUMMARY_SELECT, orderBy: { numero: "asc" } }),
+        prisma.legalRequirement.findMany({ where: { responsable: resp, cumple: "NO" }, select: REQ_SUMMARY_SELECT, orderBy: { numero: "asc" } }),
       ]);
-      return { responsable: resp, total, cumple: cumpleConEvidencia, cumpleSinEvidencia, pendiente, noCumple, sinEvidencia };
+      return {
+        responsable: resp,
+        total,
+        cumple: cumpleConEvidencia,
+        cumpleSinEvidencia: itemsSinEvidencia.length,
+        pendiente: itemsPendiente.length,
+        noCumple: itemsNoCumple.length,
+        itemsSinEvidencia,
+        itemsPendiente,
+        itemsNoCumple,
+      };
     })
   );
   return results;

@@ -62,21 +62,59 @@ export default async function MisTareasPage() {
                   <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
                 </div>
                 <p className="mt-1 text-xs text-zinc-400">Cumplimiento real = cumple SI + evidencia cargada</p>
-                <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                  <span className="rounded-full bg-green-50 px-2 py-0.5 font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    ✓ Cumple con evidencia: {r.cumple}
-                  </span>
-                  {r.cumpleSinEvidencia > 0 && (
-                    <span className="rounded-full bg-orange-50 px-2 py-0.5 font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                      ⚠ Cumple sin evidencia: {r.cumpleSinEvidencia}
-                    </span>
+
+                <div className="mt-3 space-y-2">
+                  {/* Cumple sin evidencia */}
+                  {r.itemsSinEvidencia.length > 0 && (
+                    <details className="rounded border border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
+                      <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-orange-700 dark:text-orange-400">
+                        ⚠ Cumple sin evidencia ({r.itemsSinEvidencia.length}) — falta subir documento
+                      </summary>
+                      <ul className="divide-y divide-orange-100 px-3 pb-2 dark:divide-orange-800">
+                        {r.itemsSinEvidencia.map((req) => (
+                          <li key={req.id} className="py-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+                            <span className="font-medium">N°{req.numero}</span> · {req.ambito} — {req.titulo}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   )}
-                  <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    ⏳ Pendiente: {r.pendiente}
-                  </span>
-                  <span className="rounded-full bg-red-50 px-2 py-0.5 font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                    ✗ No cumple: {r.noCumple}
-                  </span>
+
+                  {/* Pendiente */}
+                  {r.itemsPendiente.length > 0 && (
+                    <details className="rounded border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20">
+                      <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+                        ⏳ Sin evaluar ({r.itemsPendiente.length}) — debes indicar si cumple o no
+                      </summary>
+                      <ul className="divide-y divide-amber-100 px-3 pb-2 dark:divide-amber-800">
+                        {r.itemsPendiente.map((req) => (
+                          <li key={req.id} className="py-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+                            <span className="font-medium">N°{req.numero}</span> · {req.ambito} — {req.titulo}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+
+                  {/* No cumple */}
+                  {r.itemsNoCumple.length > 0 && (
+                    <details className="rounded border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+                      <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-red-700 dark:text-red-400">
+                        ✗ No cumple ({r.itemsNoCumple.length}) — requiere plan de acción
+                      </summary>
+                      <ul className="divide-y divide-red-100 px-3 pb-2 dark:divide-red-800">
+                        {r.itemsNoCumple.map((req) => (
+                          <li key={req.id} className="py-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+                            <span className="font-medium">N°{req.numero}</span> · {req.ambito} — {req.titulo}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+
+                  {r.itemsSinEvidencia.length === 0 && r.itemsPendiente.length === 0 && r.itemsNoCumple.length === 0 && (
+                    <p className="text-xs text-green-700 dark:text-green-400">✓ Todo al día con evidencia</p>
+                  )}
                 </div>
               </div>
             );
