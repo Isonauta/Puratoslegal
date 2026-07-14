@@ -9,19 +9,23 @@ import {
   getOpenActionPlans,
   getOverallCompliance,
   getPermitsNeedingAttention,
+  getResponsablesSummary,
+  getTasksByResponsable,
 } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits] = await Promise.all([
+  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks] = await Promise.all([
     getComplianceByAmbito(),
     getOverallCompliance(),
     getNonCompliantRequirements(),
     getOpenActionPlans(),
     getEvidenceStatusSummary(),
     getPermitsNeedingAttention(),
+    session?.isAdmin ? getResponsablesSummary() : Promise.resolve(null),
+    session?.responsable ? getTasksByResponsable(session.responsable) : Promise.resolve(null),
   ]);
 
   return (
@@ -39,6 +43,9 @@ export default async function DashboardPage() {
           </Link>
           <Link href="/planes-accion" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
             Ver planes de acción →
+          </Link>
+          <Link href="/mis-tareas" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
+            Mis tareas →
           </Link>
           <span className="ml-auto text-sm text-zinc-500 dark:text-zinc-400">
             {session?.name}
@@ -203,6 +210,60 @@ export default async function DashboardPage() {
             </ul>
           </div>
         </section>
+
+        {/* Avance por responsable — admin ve todos, usuario normal ve sus tareas */}
+        {session?.isAdmin && responsablesSummary && responsablesSummary.length > 0 && (
+          <section>
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Avance por responsable
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {responsablesSummary.map((r) => {
+                const pct = r.total > 0 ? Math.round((r.cumple / r.total) * 100) : 0;
+                const pending = r.pendiente + r.noCumple + r.sinEvidencia;
+                return (
+                  <div key={r.responsable} className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="flex items-start justify-between">
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{r.responsable}</p>
+                      <span className="text-lg font-bold text-zinc-900 dark:text-zinc-50">{pct}%</span>
+                    </div>
+                    <div className="mt-2 h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
+                      <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                      <span className="text-green-700 dark:text-green-400">✓ {r.cumple}</span>
+                      {pending > 0 && <span className="text-amber-700 dark:text-amber-400">⏳ {pending} pendientes</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-2 text-right">
+              <Link href="/mis-tareas" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                Ver detalle por responsable →
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {!session?.isAdmin && myTasks !== null && (
+          <section>
+            <Link
+              href="/mis-tareas"
+              className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 shadow-sm hover:border-blue-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-700"
+            >
+              <div>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Mis tareas pendientes</p>
+                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                  {myTasks.length === 0 ? "¡Todo al día!" : `${myTasks.length} requisito${myTasks.length === 1 ? "" : "s"} requieren tu atención`}
+                </p>
+              </div>
+              <span className={`text-2xl font-bold ${myTasks.length === 0 ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}`}>
+                {myTasks.length === 0 ? "✓" : myTasks.length}
+              </span>
+            </Link>
+          </section>
+        )}
 
         {/* Requisitos incumplidos — referencia secundaria */}
         <section>

@@ -121,6 +121,51 @@ export async function getAllActionPlans() {
   });
 }
 
+export async function getTasksByResponsable(responsable: string) {
+  return prisma.legalRequirement.findMany({
+    where: {
+      responsable: { contains: responsable },
+      OR: [
+        { cumple: "PENDIENTE" },
+        { cumple: "NO" },
+        { evidenceLinks: { some: { evidenceTemplate: { files: { some: { status: { in: ["POR_GENERAR", "ACTUALIZAR", "VENCIDO"] } } } } } } },
+        { evidenceLinks: { none: {} } },
+      ],
+    },
+    orderBy: [{ cumple: "asc" }, { numero: "asc" }],
+    include: {
+      evidenceLinks: {
+        include: { evidenceTemplate: { include: { files: { orderBy: { createdAt: "desc" } } } } },
+      },
+    },
+  });
+}
+
+export async function getResponsablesSummary() {
+  const responsables = await prisma.legalRequirement.groupBy({
+    by: ["responsable"],
+    _count: { _all: true },
+    where: { responsable: { not: null } },
+  });
+
+  const results = await Promise.all(
+    responsables
+      .filter((r) => r.responsable)
+      .map(async (r) => {
+        const resp = r.responsable!;
+        const [cumple, pendiente, noCumple, sinEvidencia] = await Promise.all([
+          prisma.legalRequirement.count({ where: { responsable: { contains: resp }, cumple: "SI" } }),
+          prisma.legalRequirement.count({ where: { responsable: { contains: resp }, cumple: "PENDIENTE" } }),
+          prisma.legalRequirement.count({ where: { responsable: { contains: resp }, cumple: "NO" } }),
+          prisma.legalRequirement.count({ where: { responsable: { contains: resp }, evidenceLinks: { none: {} } } }),
+        ]);
+        return { responsable: resp, total: r._count._all, cumple, pendiente, noCumple, sinEvidencia };
+      })
+  );
+
+  return results.sort((a, b) => b.total - a.total);
+}
+
 export async function getPermitsNeedingAttention() {
   return prisma.permit.findMany({
     where: {

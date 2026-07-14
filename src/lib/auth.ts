@@ -9,27 +9,37 @@ const COOKIE = "pl_session";
 export type SessionUser = {
   email: string;
   name: string;
+  responsable: string | null;
+  isAdmin: boolean;
 };
 
-const USERS: { email: string; name: string; hash: string }[] = [
+const USERS: { email: string; name: string; responsable: string | null; isAdmin: boolean; hash: string }[] = [
   {
     email: "scorroteaortiz@puratos.com",
-    name: "S. Corrotea",
+    name: "Sebastián Corrotea",
+    responsable: "Sebastián Corrotea",
+    isAdmin: false,
     hash: "$2b$12$xV04JpC3KjQmDM3PgKHlIuMBMdqi4jo5t68PBPXNvygkRGP4UHViq",
   },
   {
     email: "cneumannlatorre@puratos.com",
-    name: "C. Neumann",
+    name: "Christian Neumann",
+    responsable: "Christian Neumann",
+    isAdmin: false,
     hash: "$2b$12$jhavcaiMv3wsfCKOFaoqT.w2HrSQglKm4p8U27mpNnxlwfDfCftY.",
   },
   {
     email: "bhenriquez@puratos.com",
-    name: "B. Henríquez",
+    name: "Benjamín Henriquez",
+    responsable: "Benjamín Henriquez",
+    isAdmin: false,
     hash: "$2b$12$/nyNqF2z.AOJYOIzjMEw0uiasCJDrXtpWzeVdiLCTDkRYVA/oS1/C",
   },
   {
     email: "cristian@cristiancordero.cl",
     name: "Cristián Cordero",
+    responsable: null,
+    isAdmin: true,
     hash: "$2b$12$6a94P4XJnHwH.dgh..b3HurKJ7xbpy/j0SyK4L4h9vx3Gsdt54XyW",
   },
 ];
@@ -39,7 +49,7 @@ export function findUser(email: string) {
 }
 
 export async function createSession(user: SessionUser) {
-  const token = await new SignJWT({ email: user.email, name: user.name })
+  const token = await new SignJWT({ email: user.email, name: user.name, responsable: user.responsable, isAdmin: user.isAdmin })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
     .sign(SECRET);
@@ -60,7 +70,12 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, SECRET);
-    return { email: payload.email as string, name: payload.name as string };
+    return {
+      email: payload.email as string,
+      name: payload.name as string,
+      responsable: (payload.responsable as string | null) ?? null,
+      isAdmin: (payload.isAdmin as boolean) ?? false,
+    };
   } catch {
     return null;
   }
