@@ -220,7 +220,7 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {responsablesSummary.map((r) => {
                 const pct = r.total > 0 ? Math.round((r.cumple / r.total) * 100) : 0;
-                const pending = r.pendiente + r.noCumple + r.sinEvidencia;
+                const attention = r.pendiente + r.noCumple + r.cumpleSinEvidencia;
                 return (
                   <div key={r.responsable} className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                     <div className="flex items-start justify-between">
@@ -230,9 +230,13 @@ export default async function DashboardPage() {
                     <div className="mt-2 h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
                       <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
                     </div>
+                    <p className="mt-1 text-xs text-zinc-400">con evidencia / {r.total} requisitos</p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs">
                       <span className="text-green-700 dark:text-green-400">✓ {r.cumple}</span>
-                      {pending > 0 && <span className="text-amber-700 dark:text-amber-400">⏳ {pending} pendientes</span>}
+                      {r.cumpleSinEvidencia > 0 && (
+                        <span className="text-orange-600 dark:text-orange-400">⚠ {r.cumpleSinEvidencia} sin evidencia</span>
+                      )}
+                      {attention > 0 && <span className="text-amber-700 dark:text-amber-400">⏳ {r.pendiente + r.noCumple} por resolver</span>}
                     </div>
                   </div>
                 );

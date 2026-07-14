@@ -61,18 +61,21 @@ export default async function MisTareasPage() {
                 <div className="mt-3 h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
                   <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
                 </div>
-                <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                <p className="mt-1 text-xs text-zinc-400">Cumplimiento real = cumple SI + evidencia cargada</p>
+                <div className="mt-2 flex flex-wrap gap-3 text-xs">
                   <span className="rounded-full bg-green-50 px-2 py-0.5 font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    ✓ Cumple: {r.cumple}
+                    ✓ Cumple con evidencia: {r.cumple}
                   </span>
+                  {r.cumpleSinEvidencia > 0 && (
+                    <span className="rounded-full bg-orange-50 px-2 py-0.5 font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                      ⚠ Cumple sin evidencia: {r.cumpleSinEvidencia}
+                    </span>
+                  )}
                   <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                     ⏳ Pendiente: {r.pendiente}
                   </span>
                   <span className="rounded-full bg-red-50 px-2 py-0.5 font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
                     ✗ No cumple: {r.noCumple}
-                  </span>
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                    Sin evidencia: {r.sinEvidencia}
                   </span>
                 </div>
               </div>

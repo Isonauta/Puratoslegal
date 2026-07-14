@@ -146,14 +146,17 @@ const KNOWN_RESPONSABLES = ["Sebastián Corrotea", "Benjamín Henriquez"];
 export async function getResponsablesSummary() {
   const results = await Promise.all(
     KNOWN_RESPONSABLES.map(async (resp) => {
-      const [total, cumple, pendiente, noCumple, sinEvidencia] = await Promise.all([
+      const [total, cumpleConEvidencia, cumpleSinEvidencia, pendiente, noCumple, sinEvidencia] = await Promise.all([
         prisma.legalRequirement.count({ where: { responsable: resp } }),
-        prisma.legalRequirement.count({ where: { responsable: resp, cumple: "SI" } }),
+        // Cumple real: marcado SI y tiene al menos un archivo de evidencia
+        prisma.legalRequirement.count({ where: { responsable: resp, cumple: "SI", evidenceLinks: { some: { evidenceTemplate: { files: { some: {} } } } } } }),
+        // Cumple declarado pero sin respaldo documental — riesgo auditoría
+        prisma.legalRequirement.count({ where: { responsable: resp, cumple: "SI", evidenceLinks: { none: {} } } }),
         prisma.legalRequirement.count({ where: { responsable: resp, cumple: "PENDIENTE" } }),
         prisma.legalRequirement.count({ where: { responsable: resp, cumple: "NO" } }),
         prisma.legalRequirement.count({ where: { responsable: resp, evidenceLinks: { none: {} } } }),
       ]);
-      return { responsable: resp, total, cumple, pendiente, noCumple, sinEvidencia };
+      return { responsable: resp, total, cumple: cumpleConEvidencia, cumpleSinEvidencia, pendiente, noCumple, sinEvidencia };
     })
   );
   return results;
