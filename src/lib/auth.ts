@@ -22,13 +22,6 @@ const USERS: { email: string; name: string; responsable: string | null; isAdmin:
     hash: "$2b$12$xV04JpC3KjQmDM3PgKHlIuMBMdqi4jo5t68PBPXNvygkRGP4UHViq",
   },
   {
-    email: "cneumannlatorre@puratos.com",
-    name: "Christian Neumann",
-    responsable: "Christian Neumann",
-    isAdmin: false,
-    hash: "$2b$12$jhavcaiMv3wsfCKOFaoqT.w2HrSQglKm4p8U27mpNnxlwfDfCftY.",
-  },
-  {
     email: "bhenriquez@puratos.com",
     name: "Benjamín Henriquez",
     responsable: "Benjamín Henriquez",
