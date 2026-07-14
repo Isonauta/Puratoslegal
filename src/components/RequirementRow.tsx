@@ -23,6 +23,9 @@ type Requirement = {
   numero: number;
   titulo: string;
   ambito: string;
+  articulo: string | null;
+  requisitoTexto: string | null;
+  formaCumplimiento: string | null;
   cumple: string;
   responsable: string | null;
   justificacionNoAplica: string | null;
@@ -53,9 +56,11 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
   const [responsable, setResponsable] = useState(requirement.responsable ?? "");
   const [justificacion, setJustificacion] = useState(requirement.justificacionNoAplica ?? "");
   const [savingJustificacion, setSavingJustificacion] = useState(false);
+  const [formaCumplimiento, setFormaCumplimiento] = useState(requirement.formaCumplimiento ?? "");
+  const [savingForma, setSavingForma] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  async function updateField(data: { cumple?: string; responsable?: string | null; justificacionNoAplica?: string | null }) {
+  async function updateField(data: { cumple?: string; responsable?: string | null; justificacionNoAplica?: string | null; formaCumplimiento?: string | null }) {
     setSaving(true);
     await fetch(`/api/requirements/${requirement.id}`, {
       method: "PATCH",
@@ -82,6 +87,12 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
     setSavingJustificacion(false);
   }
 
+  async function saveFormaCumplimiento() {
+    setSavingForma(true);
+    await updateField({ formaCumplimiento: formaCumplimiento.trim() || null });
+    setSavingForma(false);
+  }
+
   return (
     <div className={`rounded-lg border shadow-sm transition-colors ${CUMPLE_BG[cumple] ?? CUMPLE_BG.PENDIENTE}`}>
       <button
@@ -89,13 +100,19 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
       >
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
             N°{requirement.numero} · {requirement.ambito} — {requirement.titulo}
           </p>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Responsable: {requirement.responsable ?? "Sin asignar"}
+            {requirement.articulo && <span className="ml-2 text-zinc-400">· {requirement.articulo}</span>}
           </p>
+          {requirement.requisitoTexto && (
+            <p className="mt-1 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
+              {requirement.requisitoTexto}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -154,8 +171,22 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
               </div>
             </div>
           )}
-          {requirement.evidenceLinks.length === 0 && cumple !== "NO_APLICA" && (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin evidencia asociada a este requisito todavía.</p>
+          {/* Nota de evidencia / forma de cumplimiento — siempre editable */}
+          {cumple !== "NO_APLICA" && (
+            <div className="mb-3">
+              <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                Nota de evidencia
+              </p>
+              <textarea
+                rows={2}
+                placeholder="Describe qué evidencia existe o qué se hará, aunque aún no tengas el link…"
+                value={formaCumplimiento}
+                onChange={(e) => setFormaCumplimiento(e.target.value)}
+                onBlur={saveFormaCumplimiento}
+                className="w-full rounded border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-700 placeholder-zinc-400 focus:border-blue-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+              />
+              {savingForma && <p className="mt-0.5 text-xs text-zinc-400">Guardando…</p>}
+            </div>
           )}
           <div className="space-y-3">
             {requirement.evidenceLinks.map((link) => (
