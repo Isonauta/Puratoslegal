@@ -47,6 +47,9 @@ export default async function DashboardPage() {
           <Link href="/mis-tareas" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
             Mis tareas →
           </Link>
+          <Link href="/chat" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
+            Consulta legal →
+          </Link>
           <span className="ml-auto text-sm text-zinc-500 dark:text-zinc-400">
             {session?.name}
           </span>
