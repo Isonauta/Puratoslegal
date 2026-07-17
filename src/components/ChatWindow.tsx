@@ -7,6 +7,58 @@ type Message = {
   content: string;
 };
 
+function renderMarkdown(text: string) {
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let key = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Blank line → spacer
+    if (line.trim() === "") {
+      elements.push(<div key={key++} className="h-2" />);
+      continue;
+    }
+
+    // Bullet list item
+    if (/^[-*]\s/.test(line)) {
+      elements.push(
+        <div key={key++} className="flex gap-2 leading-relaxed">
+          <span className="mt-px shrink-0 text-zinc-400">·</span>
+          <span>{inlineParse(line.replace(/^[-*]\s/, ""))}</span>
+        </div>
+      );
+      continue;
+    }
+
+    // Heading (##)
+    if (/^#{1,3}\s/.test(line)) {
+      elements.push(
+        <p key={key++} className="font-semibold leading-relaxed">
+          {inlineParse(line.replace(/^#{1,3}\s/, ""))}
+        </p>
+      );
+      continue;
+    }
+
+    // Normal paragraph
+    elements.push(<p key={key++} className="leading-relaxed">{inlineParse(line)}</p>);
+  }
+
+  return <>{elements}</>;
+}
+
+function inlineParse(text: string): React.ReactNode {
+  // Split on **bold** patterns
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) =>
+    /^\*\*[^*]+\*\*$/.test(part)
+      ? <strong key={i}>{part.slice(2, -2)}</strong>
+      : part
+  );
+}
+
 const SUGGESTIONS = [
   "¿Qué dice la normativa sobre RIOHS?",
   "¿Qué requisitos de SST están pendientes?",
@@ -120,19 +172,23 @@ export function ChatWindow() {
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${
                   m.role === "user"
-                    ? "bg-blue-600 text-white"
+                    ? "bg-blue-600 text-white leading-relaxed"
                     : "border border-zinc-200 bg-white text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
                 }`}
               >
-                {m.content || (loading && i === messages.length - 1 ? (
-                  <span className="inline-flex gap-1">
+                {m.role === "user" ? (
+                  m.content
+                ) : m.content ? (
+                  renderMarkdown(m.content)
+                ) : loading && i === messages.length - 1 ? (
+                  <span className="inline-flex gap-1 py-1">
                     <span className="animate-bounce">·</span>
                     <span className="animate-bounce" style={{ animationDelay: "0.1s" }}>·</span>
                     <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>·</span>
                   </span>
-                ) : "")}
+                ) : null}
               </div>
             </div>
           ))}
