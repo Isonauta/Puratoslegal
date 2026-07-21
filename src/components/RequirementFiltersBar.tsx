@@ -13,7 +13,7 @@ const CUMPLE_LABEL: Record<string, string> = {
   PENDIENTE: "Pendiente",
 };
 
-export function RequirementFiltersBar({ filters }: { filters: RequirementFilters }) {
+export function RequirementFiltersBar({ filters, leyes }: { filters: RequirementFilters; leyes: { key: string; label: string }[] }) {
   const router = useRouter();
   const [q, setQ] = useState(filters.q ?? "");
 
@@ -80,13 +80,23 @@ export function RequirementFiltersBar({ filters }: { filters: RequirementFilters
         <option value="revisar">⚠ Por revisar aplicabilidad</option>
         <option value="fuera">Fuera de alcance SIG</option>
       </select>
+      <select
+        value={filters.ley ?? ""}
+        onChange={(e) => pushFilters({ ...filters, ley: e.target.value || undefined })}
+        className="rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+      >
+        <option value="">Todas las leyes y decretos</option>
+        {leyes.map((l) => (
+          <option key={l.key} value={l.key}>{l.label}</option>
+        ))}
+      </select>
       <button
         type="submit"
         className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
       >
         Buscar
       </button>
-      {(filters.ambito || filters.cumple || filters.evidencia || filters.alcance || filters.q) && (
+      {(filters.ambito || filters.cumple || filters.evidencia || filters.alcance || filters.ley || filters.q) && (
         <button
           type="button"
           onClick={() => {

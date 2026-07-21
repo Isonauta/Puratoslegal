@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllRequirements } from "@/lib/queries";
+import { getAllRequirements, getLeyesDisponibles } from "@/lib/queries";
 import type { RequirementFilters } from "@/lib/queries";
 import { RequirementRow } from "@/components/RequirementRow";
 import { RequirementFiltersBar } from "@/components/RequirementFiltersBar";
@@ -21,10 +21,14 @@ export default async function RequisitosPage({
     cumple: CUMPLE_VALUES.includes(params.cumple as CumpleEstado) ? (params.cumple as CumpleEstado) : undefined,
     evidencia: params.evidencia === "con" || params.evidencia === "sin" ? params.evidencia : undefined,
     alcance: params.alcance === "revisar" || params.alcance === "fuera" ? params.alcance : undefined,
+    ley: params.ley || undefined,
     q: params.q || undefined,
   };
 
-  const requirements = await getAllRequirements(filters);
+  const [requirements, leyes] = await Promise.all([
+    getAllRequirements(filters),
+    getLeyesDisponibles(),
+  ]);
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, v]) => v !== undefined) as [string, string][]
   ).toString();
@@ -52,7 +56,7 @@ export default async function RequisitosPage({
             Exportar a Excel
           </a>
         </div>
-        <RequirementFiltersBar filters={filters} />
+        <RequirementFiltersBar filters={filters} leyes={leyes} />
       </header>
 
       <main className="mx-auto max-w-6xl space-y-3 px-6 py-8">
