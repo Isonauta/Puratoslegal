@@ -37,18 +37,22 @@ export default async function DashboardPage() {
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Matriz R-110-02 · Puratos
         </p>
-        <div className="mt-3 flex items-center gap-4">
-          <Link href="/requisitos" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
-            Gestionar requisitos y evidencia →
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Link href="/requisitos" className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-300">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            Requisitos y evidencia
           </Link>
-          <Link href="/planes-accion" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
-            Ver planes de acción →
+          <Link href="/planes-accion" className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-300">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+            Planes de acción
           </Link>
-          <Link href="/mis-tareas" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
-            Mis tareas →
+          <Link href="/mis-tareas" className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-300">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            Mis tareas
           </Link>
-          <Link href="/chat" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
-            Consulta legal →
+          <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 dark:border-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+            Consulta legal
           </Link>
           <span className="ml-auto text-sm text-zinc-500 dark:text-zinc-400">
             {session?.name}
