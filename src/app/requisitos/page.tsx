@@ -20,6 +20,7 @@ export default async function RequisitosPage({
     ambito: AMBITOS.includes(params.ambito as Ambito) ? (params.ambito as Ambito) : undefined,
     cumple: CUMPLE_VALUES.includes(params.cumple as CumpleEstado) ? (params.cumple as CumpleEstado) : undefined,
     evidencia: params.evidencia === "con" || params.evidencia === "sin" ? params.evidencia : undefined,
+    alcance: params.alcance === "revisar" || params.alcance === "fuera" ? params.alcance : undefined,
     q: params.q || undefined,
   };
 

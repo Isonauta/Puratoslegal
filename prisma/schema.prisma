@@ -68,6 +68,8 @@ model LegalRequirement {
   riesgo                   String?
   oportunidad              String?
   justificacionNoAplica    String?
+  clasificacionSIG         String?  // Clasificación de aplicabilidad al SIG: núcleo SST, núcleo ambiental, dual, fuera de alcance, etc.
+  fueraAlcanceSIG          Boolean  @default(false) // true = marcado explícitamente fuera del alcance del SIG
 
   evidenceLinks EvidenceLink[]
   actionPlans   ActionPlan[]
