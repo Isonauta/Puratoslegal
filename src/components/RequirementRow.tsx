@@ -81,6 +81,23 @@ function EvidenceBadge({ links, cumple }: { links: Requirement["evidenceLinks"];
   );
 }
 
+function ClasificacionBadge({ clasificacion }: { clasificacion: string }) {
+  const isRevisar = clasificacion.startsWith("Revisar");
+  const isDual = clasificacion.startsWith("Dual");
+  const isSST = clasificacion.startsWith("Núcleo SST");
+  const isMA = clasificacion.startsWith("Núcleo Ambiental");
+
+  let cls = "inline-block rounded px-1.5 py-0.5 text-xs font-medium ";
+  if (isRevisar) cls += "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400";
+  else if (isDual) cls += "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400";
+  else if (isSST) cls += "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+  else if (isMA) cls += "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+  else cls += "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+
+  const label = isRevisar ? `⚠ ${clasificacion}` : clasificacion;
+  return <span className={cls}>{label}</span>;
+}
+
 export function RequirementRow({ requirement }: { requirement: Requirement }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -151,11 +168,16 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Responsable: {requirement.responsable ?? "Sin asignar"}
             {requirement.articulo && <span className="ml-2 text-zinc-400">· {requirement.articulo}</span>}
-            {fueraAlcance && <span className="ml-2 rounded bg-zinc-200 px-1.5 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">Fuera de alcance SIG</span>}
-            {!fueraAlcance && requirement.clasificacionSIG && requirement.clasificacionSIG.startsWith("Revisar") && (
-              <span className="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">⚠ Revisar aplicabilidad</span>
-            )}
           </p>
+          {(fueraAlcance || requirement.clasificacionSIG) && (
+            <p className="mt-0.5">
+              {fueraAlcance ? (
+                <span className="inline-block rounded bg-zinc-200 px-1.5 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">Fuera de alcance SIG</span>
+              ) : requirement.clasificacionSIG ? (
+                <ClasificacionBadge clasificacion={requirement.clasificacionSIG} />
+              ) : null}
+            </p>
+          )}
           {requirement.requisitoTexto && (
             <p className="mt-1 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
               {requirement.requisitoTexto}
@@ -195,13 +217,8 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
 
       {open && (
         <div className="border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          {/* Clasificación SIG y botón fuera de alcance */}
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            {requirement.clasificacionSIG && (
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                Clasificación: <span className="font-medium text-zinc-600 dark:text-zinc-300">{requirement.clasificacionSIG}</span>
-              </p>
-            )}
+          {/* Botón fuera de alcance */}
+          <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
               onClick={toggleFueraAlcance}
