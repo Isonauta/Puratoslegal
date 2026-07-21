@@ -23,6 +23,9 @@ type Requirement = {
   numero: number;
   titulo: string;
   ambito: string;
+  tipoDocumento: string;
+  documentoNumero: string | null;
+  organismo: string;
   articulo: string | null;
   requisitoTexto: string | null;
   formaCumplimiento: string | null;
@@ -165,9 +168,13 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
             N°{requirement.numero} · {requirement.ambito} — {requirement.titulo}
           </p>
+          <p className="mt-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
+            {requirement.tipoDocumento}{requirement.documentoNumero ? ` N°${requirement.documentoNumero}` : ""}
+            {requirement.articulo ? ` · Art. ${requirement.articulo}` : ""}
+            <span className="ml-2 font-normal text-zinc-400">{requirement.organismo}</span>
+          </p>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Responsable: {requirement.responsable ?? "Sin asignar"}
-            {requirement.articulo && <span className="ml-2 text-zinc-400">· {requirement.articulo}</span>}
           </p>
           {(fueraAlcance || requirement.clasificacionSIG) && (
             <p className="mt-0.5">
