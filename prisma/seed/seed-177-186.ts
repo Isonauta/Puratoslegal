@@ -24,7 +24,7 @@ async function main() {
       data: { legalRequirementId: req.id, evidenceTemplateId: template.id },
     });
     await prisma.evidenceFile.create({
-      data: { evidenceTemplateId: template.id, webUrl: URL, provider: "SHAREPOINT", status: "VIGENTE", fileName: "DIA" },
+      data: { evidenceTemplateId: template.id, webUrl: URL, provider: "SHAREPOINT", status: "VIGENTE", fileName: "DIA", externalId: "DIA-" + req.numero },
     });
     console.log("N" + req.numero + " ok");
   }
