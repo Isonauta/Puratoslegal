@@ -49,6 +49,36 @@ const CUMPLE_BG: Record<string, string> = {
   NO_APLICA: "border-zinc-200   bg-zinc-50   dark:border-zinc-800   dark:bg-zinc-900",
 };
 
+function EvidenceBadge({ links, cumple }: { links: Requirement["evidenceLinks"]; cumple: string }) {
+  if (cumple === "NO_APLICA") return null;
+
+  const hasFiles = links.some((l) => l.evidenceTemplate.files.length > 0);
+  const hasLinks = links.length > 0;
+
+  if (hasFiles) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/40 dark:text-green-400">
+        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+        Con evidencia
+      </span>
+    );
+  }
+  if (hasLinks) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z" /></svg>
+        Sin archivo
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      Sin evidencia
+    </span>
+  );
+}
+
 export function RequirementRow({ requirement }: { requirement: Requirement }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -140,6 +170,7 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
               </option>
             ))}
           </select>
+          <EvidenceBadge links={requirement.evidenceLinks} cumple={cumple} />
           <span className="text-zinc-400">{open ? "▲" : "▼"}</span>
         </div>
       </button>
