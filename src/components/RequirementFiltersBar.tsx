@@ -71,13 +71,22 @@ export function RequirementFiltersBar({ filters }: { filters: RequirementFilters
         <option value="con">Con evidencia</option>
         <option value="sin">Sin evidencia</option>
       </select>
+      <select
+        value={filters.alcance ?? ""}
+        onChange={(e) => pushFilters({ ...filters, alcance: (e.target.value || undefined) as RequirementFilters["alcance"] })}
+        className="rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+      >
+        <option value="">Todo el alcance SIG</option>
+        <option value="revisar">⚠ Por revisar aplicabilidad</option>
+        <option value="fuera">Fuera de alcance SIG</option>
+      </select>
       <button
         type="submit"
         className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
       >
         Buscar
       </button>
-      {(filters.ambito || filters.cumple || filters.evidencia || filters.q) && (
+      {(filters.ambito || filters.cumple || filters.evidencia || filters.alcance || filters.q) && (
         <button
           type="button"
           onClick={() => {

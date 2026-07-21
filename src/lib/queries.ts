@@ -82,6 +82,7 @@ export type RequirementFilters = {
   ambito?: Ambito;
   cumple?: CumpleEstado;
   evidencia?: "con" | "sin";
+  alcance?: "revisar" | "fuera";
   q?: string;
 };
 
@@ -91,6 +92,8 @@ export async function getAllRequirements(filters: RequirementFilters = {}) {
   if (filters.cumple) where.cumple = filters.cumple;
   if (filters.evidencia === "con") where.evidenceLinks = { some: {} };
   if (filters.evidencia === "sin") where.evidenceLinks = { none: {} };
+  if (filters.alcance === "revisar") where.clasificacionSIG = { startsWith: "Revisar" };
+  if (filters.alcance === "fuera") where.fueraAlcanceSIG = true;
   if (filters.q) {
     const pattern = `%${filters.q}%`;
     const matches = await prisma.$queryRaw<{ id: string }[]>`

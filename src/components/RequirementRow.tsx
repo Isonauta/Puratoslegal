@@ -29,6 +29,8 @@ type Requirement = {
   cumple: string;
   responsable: string | null;
   justificacionNoAplica: string | null;
+  clasificacionSIG: string | null;
+  fueraAlcanceSIG: boolean;
   evidenceLinks: { evidenceTemplate: EvidenceTemplate }[];
 };
 
@@ -89,6 +91,7 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
   const [formaCumplimiento, setFormaCumplimiento] = useState(requirement.formaCumplimiento ?? "");
   const [savingForma, setSavingForma] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [fueraAlcance, setFueraAlcance] = useState(requirement.fueraAlcanceSIG);
 
   async function updateField(data: { cumple?: string; responsable?: string | null; justificacionNoAplica?: string | null; formaCumplimiento?: string | null }) {
     setSaving(true);
@@ -123,8 +126,19 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
     setSavingForma(false);
   }
 
+  async function toggleFueraAlcance() {
+    const next = !fueraAlcance;
+    setFueraAlcance(next);
+    await fetch(`/api/requirements/${requirement.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fueraAlcanceSIG: next }),
+    });
+    router.refresh();
+  }
+
   return (
-    <div className={`rounded-lg border shadow-sm transition-colors ${CUMPLE_BG[cumple] ?? CUMPLE_BG.PENDIENTE}`}>
+    <div className={`rounded-lg border shadow-sm transition-colors ${fueraAlcance ? "border-zinc-300 bg-white opacity-60 dark:border-zinc-700 dark:bg-zinc-900" : CUMPLE_BG[cumple] ?? CUMPLE_BG.PENDIENTE}`}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -137,6 +151,10 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Responsable: {requirement.responsable ?? "Sin asignar"}
             {requirement.articulo && <span className="ml-2 text-zinc-400">· {requirement.articulo}</span>}
+            {fueraAlcance && <span className="ml-2 rounded bg-zinc-200 px-1.5 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">Fuera de alcance SIG</span>}
+            {!fueraAlcance && requirement.clasificacionSIG && requirement.clasificacionSIG.startsWith("Revisar") && (
+              <span className="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">⚠ Revisar aplicabilidad</span>
+            )}
           </p>
           {requirement.requisitoTexto && (
             <p className="mt-1 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -177,6 +195,25 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
 
       {open && (
         <div className="border-t border-zinc-100 px-4 py-3 dark:border-zinc-800">
+          {/* Clasificación SIG y botón fuera de alcance */}
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            {requirement.clasificacionSIG && (
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                Clasificación: <span className="font-medium text-zinc-600 dark:text-zinc-300">{requirement.clasificacionSIG}</span>
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={toggleFueraAlcance}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                fueraAlcance
+                  ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                  : "border-zinc-300 bg-white text-zinc-600 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:border-orange-700 dark:hover:bg-orange-900/20"
+              }`}
+            >
+              {fueraAlcance ? "↩ Incluir en alcance SIG" : "Marcar fuera de alcance SIG"}
+            </button>
+          </div>
           {cumple === "NO_APLICA" && (
             <div className="mb-3 rounded border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800">
               <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">Justificación de No aplica</p>
