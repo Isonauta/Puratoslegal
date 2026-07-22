@@ -83,8 +83,28 @@ export type RequirementFilters = {
   cumple?: CumpleEstado;
   evidencia?: "con" | "sin";
   alcance?: "revisar" | "fuera";
+  ley?: string;
   q?: string;
 };
+
+export async function getLeyesDisponibles() {
+  const rows = await prisma.legalRequirement.findMany({
+    select: { tipoDocumento: true, documentoNumero: true, titulo: true },
+    orderBy: [{ tipoDocumento: "asc" }, { documentoNumero: "asc" }],
+  });
+  const seen = new Set<string>();
+  const result: { key: string; label: string }[] = [];
+  for (const r of rows) {
+    const key = `${r.tipoDocumento}|${r.documentoNumero ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const label = r.documentoNumero
+      ? `${r.tipoDocumento} N°${r.documentoNumero}`
+      : r.tipoDocumento;
+    result.push({ key, label });
+  }
+  return result;
+}
 
 export async function getAllRequirements(filters: RequirementFilters = {}) {
   const where: Prisma.LegalRequirementWhereInput = {};
@@ -94,6 +114,11 @@ export async function getAllRequirements(filters: RequirementFilters = {}) {
   if (filters.evidencia === "sin") where.evidenceLinks = { none: {} };
   if (filters.alcance === "revisar") where.clasificacionSIG = { startsWith: "Revisar" };
   if (filters.alcance === "fuera") where.fueraAlcanceSIG = true;
+  if (filters.ley) {
+    const [tipo, numero] = filters.ley.split("|");
+    where.tipoDocumento = tipo;
+    where.documentoNumero = numero || null;
+  }
   if (filters.q) {
     const pattern = `%${filters.q}%`;
     const matches = await prisma.$queryRaw<{ id: string }[]>`

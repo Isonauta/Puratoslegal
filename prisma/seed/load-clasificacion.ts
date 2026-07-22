@@ -15,7 +15,7 @@ const EXCEL_PATH = path.join(
 async function main() {
   const wb = XLSX.readFile(EXCEL_PATH);
   const ws = wb.Sheets["Detalle_Clasificado"];
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { header: 1 }) as unknown[][];
+  const rows = (XLSX.utils.sheet_to_json(ws, { header: 1 }) as unknown) as unknown[][];
 
   // Header row (index 0):
   // [0]=Fila origen, [1]=N°, [14]=Clasificación preliminar
