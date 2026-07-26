@@ -159,12 +159,13 @@ function DocRow({ doc, isAdmin, onDeleted }: { doc: Documento; isAdmin: boolean;
         )}
         {doc.linkUrl ? (
           <a href={doc.linkUrl} target="_blank" rel="noopener noreferrer"
-            className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-            Abrir →
+            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-transform">
+            <span>{PROVIDER_ICON[doc.linkProvider ?? "SHAREPOINT"]}</span>
+            Abrir
           </a>
         ) : doc.publicUrl ? (
           <a href={doc.publicUrl} download={doc.fileName ?? undefined} target="_blank" rel="noopener noreferrer"
-            className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
+            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 active:scale-95 transition-transform dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700">
             ↓ Descargar
           </a>
         ) : null}
