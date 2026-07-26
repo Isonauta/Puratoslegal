@@ -98,11 +98,48 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
           </p>
         </section>
 
-        {/* Requisitos sin plan (detectados automáticamente) */}
+        {/* Tabla de planes creados */}
+        <section>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+              Planes creados ({plans.length}{allPlans.length !== plans.length ? ` de ${allPlans.length}` : ""})
+            </h2>
+            <Suspense>
+              <ActionPlanFilters />
+            </Suspense>
+          </div>
+
+          {plans.length === 0 ? (
+            <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
+              <p className="text-sm text-zinc-400 dark:text-zinc-500">
+                {allPlans.length === 0
+                  ? "Aún no hay planes. Usa \"+ Crear plan\" en los requisitos de arriba."
+                  : "Ningún plan coincide con los filtros seleccionados."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {plans.map((p) => (
+                <ActionPlanRow key={p.id} plan={p} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {totalPendientes === 0 && allPlans.length === 0 && (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-8 text-center dark:border-green-800 dark:bg-green-900/20">
+            <p className="text-lg font-semibold text-green-700 dark:text-green-400">¡Sin pendientes!</p>
+            <p className="mt-1 text-sm text-green-600 dark:text-green-500">
+              No hay requisitos incumplidos ni sin evidencia en este momento.
+            </p>
+          </div>
+        )}
+
+        {/* Requisitos sin plan — al fondo, son los que están por trabajar */}
         {(noCumpleSinPlan.length > 0 || sinEvidenciaSinPlan.length > 0) && (
           <section>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-              Detectados sin plan — crear acción correctiva
+              Sin plan aún — requisitos detectados que requieren acción
             </h2>
 
             {noCumpleSinPlan.length > 0 && (
@@ -155,43 +192,6 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
               </div>
             )}
           </section>
-        )}
-
-        {/* Tabla de planes creados */}
-        <section>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-              Planes creados ({plans.length}{allPlans.length !== plans.length ? ` de ${allPlans.length}` : ""})
-            </h2>
-            <Suspense>
-              <ActionPlanFilters />
-            </Suspense>
-          </div>
-
-          {plans.length === 0 ? (
-            <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-sm text-zinc-400 dark:text-zinc-500">
-                {allPlans.length === 0
-                  ? "Aún no hay planes. Usa \"+ Crear plan\" en los requisitos de arriba."
-                  : "Ningún plan coincide con los filtros seleccionados."}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {plans.map((p) => (
-                <ActionPlanRow key={p.id} plan={p} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {totalPendientes === 0 && allPlans.length === 0 && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-8 text-center dark:border-green-800 dark:bg-green-900/20">
-            <p className="text-lg font-semibold text-green-700 dark:text-green-400">¡Sin pendientes!</p>
-            <p className="mt-1 text-sm text-green-600 dark:text-green-500">
-              No hay requisitos incumplidos ni sin evidencia en este momento.
-            </p>
-          </div>
         )}
       </main>
     </div>
