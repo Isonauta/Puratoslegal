@@ -2,8 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { getAllActionPlans, getRequirementsNeedingActionPlan } from "@/lib/queries";
 import { ActionPlanRow } from "@/components/ActionPlanRow";
-import { CreateActionPlanButton } from "@/components/CreateActionPlanButton";
+import { CreateActionPlanButton, type Req } from "@/components/CreateActionPlanButton";
 import { ActionPlanFilters } from "@/components/ActionPlanFilters";
+import { LeyCard } from "@/components/LeyCard";
 
 export const dynamic = "force-dynamic";
 
@@ -25,25 +26,8 @@ type PageProps = {
   searchParams: Promise<{ status?: string; responsable?: string }>;
 };
 
-type Req = {
-  id: string;
-  numero: number;
-  titulo: string;
-  ambito: string;
-  responsable: string | null;
-  cumple: string;
-  tipoDocumento: string;
-  documentoNumero: string | null;
-};
-
 function leyKey(r: Req) {
   return `${r.tipoDocumento}|${r.documentoNumero ?? ""}`;
-}
-
-function leyLabel(r: Req) {
-  return r.documentoNumero
-    ? `${r.tipoDocumento} N°${r.documentoNumero}`
-    : r.tipoDocumento;
 }
 
 function groupByLey(reqs: Req[]): Map<string, Req[]> {
@@ -224,35 +208,3 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
   );
 }
 
-function LeyCard({ reqs, color }: { reqs: Req[]; color: "red" | "orange" }) {
-  const first = reqs[0];
-  const borderColor = color === "red"
-    ? "border-red-200 border-l-red-400 dark:border-red-900/50"
-    : "border-orange-200 border-l-orange-400 dark:border-orange-900/50";
-
-  const label = leyLabel(first);
-  const ambitos = [...new Set(reqs.map((r) => r.ambito))].join(", ");
-  const responsables = [...new Set(reqs.map((r) => r.responsable).filter(Boolean))].join(", ");
-
-  const numeros = reqs.map((r) => r.numero).sort((a, b) => a - b);
-  const numerosStr = numeros.length <= 5
-    ? numeros.map((n) => `N°${n}`).join(", ")
-    : `${numeros.slice(0, 3).map((n) => `N°${n}`).join(", ")} y ${numeros.length - 3} más`;
-
-  return (
-    <div className={`rounded-lg border border-l-4 bg-white p-4 dark:bg-zinc-900 ${borderColor}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{label}</p>
-          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            {ambitos} · {reqs.length} artículo{reqs.length !== 1 ? "s" : ""} afectado{reqs.length !== 1 ? "s" : ""} ({numerosStr})
-          </p>
-          {responsables && (
-            <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">Responsable: {responsables}</p>
-          )}
-        </div>
-        <CreateActionPlanButton reqs={reqs} />
-      </div>
-    </div>
-  );
-}
