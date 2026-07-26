@@ -11,6 +11,8 @@ type Req = {
   ambito: string;
   responsable: string | null;
   cumple: string;
+  tipoDocumento: string;
+  documentoNumero: string | null;
 };
 
 const MOTIVO: Record<string, string> = {
@@ -18,11 +20,20 @@ const MOTIVO: Record<string, string> = {
   SI: "Cumple declarado pero sin evidencia documental — cargar documento de respaldo",
 };
 
-export function CreateActionPlanButton({ req }: { req: Req }) {
+function leyLabel(req: Req) {
+  return req.documentoNumero
+    ? `${req.tipoDocumento} N°${req.documentoNumero}`
+    : req.tipoDocumento;
+}
+
+// Accepts a group of requirements from the same law; creates one plan linked
+// to the first (representative) requirement, titled after the law.
+export function CreateActionPlanButton({ reqs }: { reqs: Req[] }) {
   const router = useRouter();
+  const first = reqs[0];
   const [open, setOpen] = useState(false);
   const [accion, setAccion] = useState("");
-  const [responsable, setResponsable] = useState(req.responsable ?? "");
+  const [responsable, setResponsable] = useState(first.responsable ?? "");
   const [fecha, setFecha] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -33,8 +44,8 @@ export function CreateActionPlanButton({ req }: { req: Req }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        legalRequirementId: req.id,
-        titulo: `N°${req.numero} · ${req.titulo.slice(0, 80)}`,
+        legalRequirementId: first.id,
+        titulo: leyLabel(first),
         accionCorrectiva: accion.trim(),
         responsable: responsable || null,
         fechaEjecucion: fecha || null,
@@ -50,7 +61,7 @@ export function CreateActionPlanButton({ req }: { req: Req }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded border border-blue-300 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
+        className="shrink-0 rounded border border-blue-300 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
       >
         + Crear plan
       </button>
@@ -59,7 +70,7 @@ export function CreateActionPlanButton({ req }: { req: Req }) {
 
   return (
     <div className="mt-2 space-y-2 rounded border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">{MOTIVO[req.cumple] ?? ""}</p>
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">{MOTIVO[first.cumple] ?? ""}</p>
       <textarea
         autoFocus
         rows={2}

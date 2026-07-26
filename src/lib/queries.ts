@@ -57,7 +57,7 @@ export async function getOpenActionPlans() {
   return prisma.actionPlan.findMany({
     where: { status: { not: "CERRADO" } },
     orderBy: { fechaEjecucion: "asc" },
-    include: { legalRequirement: { select: { numero: true, ambito: true, titulo: true } } },
+    include: { legalRequirement: { select: { numero: true, ambito: true, titulo: true, tipoDocumento: true, documentoNumero: true } } },
   });
 }
 
@@ -145,7 +145,7 @@ export async function getAllRequirements(filters: RequirementFilters = {}) {
 export async function getAllActionPlans() {
   return prisma.actionPlan.findMany({
     orderBy: [{ status: "asc" }, { fechaEjecucion: "asc" }],
-    include: { legalRequirement: { select: { numero: true, ambito: true, titulo: true } } },
+    include: { legalRequirement: { select: { numero: true, ambito: true, titulo: true, tipoDocumento: true, documentoNumero: true } } },
   });
 }
 
@@ -200,16 +200,15 @@ export async function getResponsablesSummary() {
 }
 
 export async function getRequirementsNeedingActionPlan() {
-  // Requisitos que no cumplen o que cumplen sin evidencia, y aún no tienen plan abierto
   const [noCumple, sinEvidencia] = await Promise.all([
     prisma.legalRequirement.findMany({
       where: { cumple: "NO" },
-      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true },
+      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true, tipoDocumento: true, documentoNumero: true },
       orderBy: { numero: "asc" },
     }),
     prisma.legalRequirement.findMany({
       where: { cumple: "SI", evidenceLinks: { none: {} } },
-      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true },
+      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true, tipoDocumento: true, documentoNumero: true },
       orderBy: { numero: "asc" },
     }),
   ]);

@@ -25,6 +25,38 @@ type PageProps = {
   searchParams: Promise<{ status?: string; responsable?: string }>;
 };
 
+type Req = {
+  id: string;
+  numero: number;
+  titulo: string;
+  ambito: string;
+  responsable: string | null;
+  cumple: string;
+  tipoDocumento: string;
+  documentoNumero: string | null;
+};
+
+function leyKey(r: Req) {
+  return `${r.tipoDocumento}|${r.documentoNumero ?? ""}`;
+}
+
+function leyLabel(r: Req) {
+  return r.documentoNumero
+    ? `${r.tipoDocumento} N°${r.documentoNumero}`
+    : r.tipoDocumento;
+}
+
+function groupByLey(reqs: Req[]): Map<string, Req[]> {
+  const map = new Map<string, Req[]>();
+  for (const r of reqs) {
+    const k = leyKey(r);
+    const arr = map.get(k) ?? [];
+    arr.push(r);
+    map.set(k, arr);
+  }
+  return map;
+}
+
 export default async function PlanesAccionPage({ searchParams }: PageProps) {
   const { status: filterStatus, responsable: filterResponsable } = await searchParams;
 
@@ -33,7 +65,6 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
     getRequirementsNeedingActionPlan(),
   ]);
 
-  // Contadores globales (sin filtro)
   const counts = {
     ABIERTO:  allPlans.filter((p) => p.status === "ABIERTO").length,
     EN_CURSO: allPlans.filter((p) => p.status === "EN_CURSO").length,
@@ -41,21 +72,37 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
     VENCIDO:  allPlans.filter((p) => p.status === "VENCIDO").length,
   };
 
-  // Planes filtrados para la tabla
   const plans = allPlans.filter((p) => {
     if (filterStatus && p.status !== filterStatus) return false;
     if (filterResponsable && p.responsable !== filterResponsable) return false;
     return true;
   });
 
-  const conPlan = new Set(allPlans.map((p) => p.legalRequirementId).filter(Boolean));
-  const noCumpleSinPlan = noCumple.filter((r) => !conPlan.has(r.id));
-  const sinEvidenciaSinPlan = sinEvidencia.filter((r) => !conPlan.has(r.id));
-  const totalPendientes = noCumpleSinPlan.length + sinEvidenciaSinPlan.length;
+  // A law is "covered" if any of its requirements already has a plan.
+  const coveredReqIds = new Set(allPlans.map((p) => p.legalRequirementId).filter(Boolean));
+  const coveredLeyKeys = new Set(
+    allPlans
+      .map((p) => {
+        const lr = p.legalRequirement;
+        if (!lr || !lr.tipoDocumento) return null;
+        return `${lr.tipoDocumento}|${lr.documentoNumero ?? ""}`;
+      })
+      .filter(Boolean) as string[]
+  );
+
+  const noCumpleSinPlan = noCumple.filter(
+    (r) => !coveredReqIds.has(r.id) && !coveredLeyKeys.has(leyKey(r))
+  );
+  const sinEvidenciaSinPlan = sinEvidencia.filter(
+    (r) => !coveredReqIds.has(r.id) && !coveredLeyKeys.has(leyKey(r))
+  );
+
+  const noCumpleGrupos = groupByLey(noCumpleSinPlan);
+  const sinEvidenciaGrupos = groupByLey(sinEvidenciaSinPlan);
+  const totalPendientes = noCumpleGrupos.size + sinEvidenciaGrupos.size;
 
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-black">
-      {/* Header */}
       <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between">
           <div>
@@ -77,7 +124,7 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
 
       <main className="mx-auto max-w-5xl space-y-8 px-6 py-8">
 
-        {/* Panel de resumen */}
+        {/* Resumen */}
         <section>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
             Resumen general
@@ -93,12 +140,12 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
           <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
             Total: {allPlans.length} plan{allPlans.length !== 1 ? "es" : ""} ·{" "}
             {totalPendientes > 0
-              ? `${totalPendientes} requisito${totalPendientes !== 1 ? "s" : ""} sin plan aún`
-              : "todos los requisitos detectados tienen plan"}
+              ? `${totalPendientes} ley${totalPendientes !== 1 ? "es" : ""} sin plan aún`
+              : "todas las leyes detectadas tienen plan"}
           </p>
         </section>
 
-        {/* Tabla de planes creados */}
+        {/* Planes creados */}
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
@@ -113,7 +160,7 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
             <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
               <p className="text-sm text-zinc-400 dark:text-zinc-500">
                 {allPlans.length === 0
-                  ? "Aún no hay planes. Usa \"+ Crear plan\" en los requisitos de arriba."
+                  ? "Aún no hay planes. Usa \"+ Crear plan\" en las leyes de abajo."
                   : "Ningún plan coincide con los filtros seleccionados."}
               </p>
             </div>
@@ -135,58 +182,37 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
           </div>
         )}
 
-        {/* Requisitos sin plan — al fondo, son los que están por trabajar */}
-        {(noCumpleSinPlan.length > 0 || sinEvidenciaSinPlan.length > 0) && (
+        {/* Sin plan — agrupado por ley */}
+        {(noCumpleGrupos.size > 0 || sinEvidenciaGrupos.size > 0) && (
           <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-              Sin plan aún — requisitos detectados que requieren acción
+            <h2 className="mb-1 text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+              Sin plan aún — leyes que requieren acción
             </h2>
+            <p className="mb-4 text-xs text-zinc-400 dark:text-zinc-500">
+              Cada tarjeta representa una ley. Un plan de acción cubre todos sus artículos.
+            </p>
 
-            {noCumpleSinPlan.length > 0 && (
+            {noCumpleGrupos.size > 0 && (
               <div className="mb-4">
                 <p className="mb-2 text-xs font-medium text-red-600 dark:text-red-400">
-                  ✗ No cumplen ({noCumpleSinPlan.length})
+                  ✗ No cumplen — {noCumpleGrupos.size} ley{noCumpleGrupos.size !== 1 ? "es" : ""}
                 </p>
                 <div className="space-y-2">
-                  {noCumpleSinPlan.map((r) => (
-                    <div key={r.id} className="rounded-lg border border-l-4 border-red-200 border-l-red-400 bg-white p-4 dark:border-red-900/50 dark:bg-zinc-900">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                            N°{r.numero} · {r.ambito} — {r.titulo}
-                          </p>
-                          {r.responsable && (
-                            <p className="mt-0.5 text-xs text-zinc-500">Responsable: {r.responsable}</p>
-                          )}
-                        </div>
-                        <CreateActionPlanButton req={r} />
-                      </div>
-                    </div>
+                  {[...noCumpleGrupos.entries()].map(([key, reqs]) => (
+                    <LeyCard key={key} reqs={reqs} color="red" />
                   ))}
                 </div>
               </div>
             )}
 
-            {sinEvidenciaSinPlan.length > 0 && (
+            {sinEvidenciaGrupos.size > 0 && (
               <div>
                 <p className="mb-2 text-xs font-medium text-orange-600 dark:text-orange-400">
-                  ⚠ Cumple sin evidencia ({sinEvidenciaSinPlan.length})
+                  ⚠ Cumple sin evidencia — {sinEvidenciaGrupos.size} ley{sinEvidenciaGrupos.size !== 1 ? "es" : ""}
                 </p>
                 <div className="space-y-2">
-                  {sinEvidenciaSinPlan.map((r) => (
-                    <div key={r.id} className="rounded-lg border border-l-4 border-orange-200 border-l-orange-400 bg-white p-4 dark:border-orange-900/50 dark:bg-zinc-900">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                            N°{r.numero} · {r.ambito} — {r.titulo}
-                          </p>
-                          {r.responsable && (
-                            <p className="mt-0.5 text-xs text-zinc-500">Responsable: {r.responsable}</p>
-                          )}
-                        </div>
-                        <CreateActionPlanButton req={r} />
-                      </div>
-                    </div>
+                  {[...sinEvidenciaGrupos.entries()].map(([key, reqs]) => (
+                    <LeyCard key={key} reqs={reqs} color="orange" />
                   ))}
                 </div>
               </div>
@@ -194,6 +220,39 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
           </section>
         )}
       </main>
+    </div>
+  );
+}
+
+function LeyCard({ reqs, color }: { reqs: Req[]; color: "red" | "orange" }) {
+  const first = reqs[0];
+  const borderColor = color === "red"
+    ? "border-red-200 border-l-red-400 dark:border-red-900/50"
+    : "border-orange-200 border-l-orange-400 dark:border-orange-900/50";
+
+  const label = leyLabel(first);
+  const ambitos = [...new Set(reqs.map((r) => r.ambito))].join(", ");
+  const responsables = [...new Set(reqs.map((r) => r.responsable).filter(Boolean))].join(", ");
+
+  const numeros = reqs.map((r) => r.numero).sort((a, b) => a - b);
+  const numerosStr = numeros.length <= 5
+    ? numeros.map((n) => `N°${n}`).join(", ")
+    : `${numeros.slice(0, 3).map((n) => `N°${n}`).join(", ")} y ${numeros.length - 3} más`;
+
+  return (
+    <div className={`rounded-lg border border-l-4 bg-white p-4 dark:bg-zinc-900 ${borderColor}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{label}</p>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            {ambitos} · {reqs.length} artículo{reqs.length !== 1 ? "s" : ""} afectado{reqs.length !== 1 ? "s" : ""} ({numerosStr})
+          </p>
+          {responsables && (
+            <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">Responsable: {responsables}</p>
+          )}
+        </div>
+        <CreateActionPlanButton reqs={reqs} />
+      </div>
     </div>
   );
 }
