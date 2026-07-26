@@ -51,6 +51,22 @@ export function DocumentosManager({ initialDocumentos, isAdmin }: Props) {
     });
   }, [initialDocumentos, filtroClausula, filtroNorma]);
 
+  // Group by clausula, preserving sort order
+  const grupos = useMemo(() => {
+    const map = new Map<string, { clausulaNombre: string; docs: Documento[] }>();
+    for (const d of documentosFiltrados) {
+      const entry = map.get(d.clausula) ?? { clausulaNombre: d.clausulaNombre, docs: [] };
+      entry.docs.push(d);
+      map.set(d.clausula, entry);
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [documentosFiltrados]);
+
+  function abrirModal(clausulaPreseleccionada?: string) {
+    if (clausulaPreseleccionada) setClausula(clausulaPreseleccionada);
+    setModalAbierto(true);
+  }
+
   function limpiarFormulario() {
     setClausula(ISO_CLAUSULAS[0].codigo);
     setNorma("AMBAS");
@@ -131,6 +147,7 @@ export function DocumentosManager({ initialDocumentos, isAdmin }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Filtros + botón global */}
       <div className="flex flex-wrap items-center gap-3">
         <select
           value={filtroClausula}
@@ -155,96 +172,105 @@ export function DocumentosManager({ initialDocumentos, isAdmin }: Props) {
         </select>
 
         <button
-          onClick={() => setModalAbierto(true)}
+          onClick={() => abrirModal()}
           className="ml-auto rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
         >
           + Agregar documento
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-400">
-            <tr>
-              <th className="px-4 py-3">Punto</th>
-              <th className="px-4 py-3">Documento</th>
-              <th className="px-4 py-3">Tipo</th>
-              <th className="px-4 py-3">Norma</th>
-              <th className="px-4 py-3">Subido por</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {documentosFiltrados.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">
-                  No hay documentos todavía.
-                </td>
-              </tr>
-            )}
-            {documentosFiltrados.map((d) => (
-              <tr key={d.id}>
-                <td className="px-4 py-3 align-top text-zinc-500 dark:text-zinc-400">
-                  <div className="font-medium text-zinc-700 dark:text-zinc-200">{d.clausula}</div>
-                  <div className="text-xs">{d.clausulaNombre}</div>
-                </td>
-                <td className="px-4 py-3 align-top">
-                  <div className="font-medium text-zinc-900 dark:text-zinc-50">{d.nombre}</div>
-                  {d.descripcion && <div className="text-xs text-zinc-500 dark:text-zinc-400">{d.descripcion}</div>}
-                  {d.linkUrl && (
-                    <div className="mt-1 flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
-                      <span>{PROVIDER_ICON[d.linkProvider ?? "SHAREPOINT"]}</span>
-                      <span>{PROVIDER_LABEL[d.linkProvider ?? "SHAREPOINT"]}</span>
+      {/* Vista agrupada por cláusula */}
+      {grupos.length === 0 ? (
+        <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">No hay documentos todavía.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {grupos.map(([cod, { clausulaNombre: clausulaNom, docs }]) => (
+            <div key={cod} className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+              {/* Cabecera del grupo */}
+              <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-800/50">
+                <div>
+                  <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{cod}</span>
+                  <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">{clausulaNom}</span>
+                  <span className="ml-2 rounded-full bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                    {docs.length} doc{docs.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <button
+                  onClick={() => abrirModal(cod)}
+                  className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-500 hover:border-blue-400 hover:text-blue-600 dark:border-zinc-700 dark:hover:border-blue-500 dark:hover:text-blue-400"
+                >
+                  + Agregar
+                </button>
+              </div>
+
+              {/* Filas de documentos */}
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {docs.map((d) => (
+                  <div key={d.id} className="flex items-start gap-4 px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{d.nombre}</span>
+                        <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">{d.tipo}</span>
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500">{NORMA_LABEL[d.norma]}</span>
+                      </div>
+                      {d.descripcion && (
+                        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{d.descripcion}</p>
+                      )}
+                      {d.linkUrl && (
+                        <div className="mt-1 flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
+                          <span>{PROVIDER_ICON[d.linkProvider ?? "SHAREPOINT"]}</span>
+                          <span>{PROVIDER_LABEL[d.linkProvider ?? "SHAREPOINT"]}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </td>
-                <td className="px-4 py-3 align-top text-zinc-600 dark:text-zinc-300">{d.tipo}</td>
-                <td className="px-4 py-3 align-top text-zinc-600 dark:text-zinc-300">{NORMA_LABEL[d.norma]}</td>
-                <td className="px-4 py-3 align-top text-zinc-500 dark:text-zinc-400">{d.subidoPorNombre ?? "—"}</td>
-                <td className="px-4 py-3 align-top">
-                  <div className="flex items-center justify-end gap-3">
-                    {d.linkUrl ? (
-                      <a
-                        href={d.linkUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-                      >
-                        Abrir →
-                      </a>
-                    ) : d.publicUrl ? (
-                      <a
-                        href={d.publicUrl}
-                        download={d.fileName ?? undefined}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-                      >
-                        ↓ Descargar
-                      </a>
-                    ) : null}
-                    {isAdmin && (
-                      <button
-                        onClick={() => borrarDocumento(d.id)}
-                        className="text-sm text-red-600 hover:underline dark:text-red-400"
-                      >
-                        Borrar
-                      </button>
-                    )}
+                    <div className="flex shrink-0 items-center gap-3">
+                      {d.subidoPorNombre && (
+                        <span className="text-xs text-zinc-400 dark:text-zinc-500">{d.subidoPorNombre}</span>
+                      )}
+                      {d.linkUrl ? (
+                        <a
+                          href={d.linkUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                          Abrir →
+                        </a>
+                      ) : d.publicUrl ? (
+                        <a
+                          href={d.publicUrl}
+                          download={d.fileName ?? undefined}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                          ↓ Descargar
+                        </a>
+                      ) : null}
+                      {isAdmin && (
+                        <button
+                          onClick={() => borrarDocumento(d.id)}
+                          className="text-xs text-zinc-300 hover:text-red-500 dark:text-zinc-600"
+                        >
+                          Borrar
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {modalAbierto && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-zinc-900">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Agregar documento</h2>
 
-            {/* Tabs archivo / enlace */}
             <div className="mt-3 flex rounded-lg border border-zinc-200 p-1 dark:border-zinc-700">
               {(["archivo", "enlace"] as ModalMode[]).map((m) => (
                 <button
