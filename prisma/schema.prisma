@@ -44,6 +44,12 @@ enum StorageProvider {
   GOOGLE_DRIVE
 }
 
+enum DocNorma {
+  ISO14001
+  ISO45001
+  AMBAS
+}
+
 // One row per requisito legal from "Matriz Legal".
 model LegalRequirement {
   id                 String       @id @default(cuid())
@@ -175,4 +181,31 @@ model ActionPlan {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Gestor documental básico: procedimientos, matrices y registros del SGI,
+// subidos y descargados directamente (archivo real en Supabase Storage),
+// clasificados por punto normativo (4.1, 4.2, ...) para tenerlos listos
+// ante una auditoría externa de ISO 14001 / 45001.
+model Documento {
+  id              String   @id @default(cuid())
+  clausula        String // p.ej. "4.1"
+  clausulaNombre  String // p.ej. "Comprensión de la organización y su contexto"
+  norma           DocNorma
+  tipo            String // Procedimiento, Matriz, Registro, Otro
+  nombre          String
+  descripcion     String?
+  storagePath     String // ruta dentro del bucket "documentos" de Supabase Storage
+  publicUrl       String
+  fileName        String
+  mimeType        String?
+  sizeBytes       Int?
+  subidoPorEmail  String?
+  subidoPorNombre String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clausula])
+  @@index([norma])
 }
