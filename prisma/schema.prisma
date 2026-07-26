@@ -178,6 +178,9 @@ model ActionPlan {
   responsable        String?
   fechaEjecucion     DateTime?
   status             ActionPlanStatus  @default(ABIERTO)
+  evidenciaUrl       String?
+  evidenciaProvider  StorageProvider?
+  evidenciaNombre    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
