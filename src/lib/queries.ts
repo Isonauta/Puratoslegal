@@ -228,3 +228,9 @@ export async function getPermitsNeedingAttention() {
     orderBy: { numero: "asc" },
   });
 }
+
+export async function getAllDocumentos() {
+  return prisma.documento.findMany({
+    orderBy: [{ clausula: "asc" }, { createdAt: "desc" }],
+  });
+}
