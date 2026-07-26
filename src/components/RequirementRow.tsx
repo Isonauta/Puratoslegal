@@ -45,7 +45,7 @@ const CUMPLE_LABEL: Record<string, string> = {
   PENDIENTE: "Pendiente",
 };
 const STATUS_OPTIONS = ["POR_GENERAR", "EN_REVISION", "VIGENTE", "VENCIDO", "ACTUALIZAR"];
-export const RESPONSABLES = ["Sebastián Corrotea", "Benjamín Henriquez"];
+export const RESPONSABLES = ["Sebastián Corrotea", "Benjamín Henriquez", "Cristian Cordero", "Carlos Neumann"];
 
 const CUMPLE_BG: Record<string, string> = {
   SI:        "border-green-200  bg-green-50  dark:border-green-900  dark:bg-green-950/40",
