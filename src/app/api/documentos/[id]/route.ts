@@ -11,7 +11,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const documento = await prisma.documento.findUnique({ where: { id } });
   if (!documento) return NextResponse.json({ error: "no encontrado" }, { status: 404 });
 
-  await deleteStorageObject(documento.storagePath);
+  if (documento.storagePath) {
+    await deleteStorageObject(documento.storagePath);
+  }
   await prisma.documento.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

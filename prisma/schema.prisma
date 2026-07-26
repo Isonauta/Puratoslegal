@@ -198,11 +198,13 @@ model Documento {
   tipo            String // Procedimiento, Matriz, Registro, Otro
   nombre          String
   descripcion     String?
-  storagePath     String // ruta dentro del bucket "documentos" de Supabase Storage
-  publicUrl       String
-  fileName        String
+  storagePath     String? // ruta dentro del bucket "documentos" de Supabase Storage
+  publicUrl       String? // URL pública de Supabase Storage (solo para archivos subidos)
+  fileName        String?
   mimeType        String?
   sizeBytes       Int?
+  linkUrl         String?          // URL externa (SharePoint / Google Drive)
+  linkProvider    StorageProvider? // proveedor del enlace externo
   subidoPorEmail  String?
   subidoPorNombre String?
 
