@@ -49,23 +49,26 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
     getRequirementsNeedingActionPlan(),
   ]);
 
+  // Excluir planes cuyo requisito vinculado ahora es NO_APLICA
+  const activePlans = allPlans.filter((p) => p.legalRequirement?.cumple !== "NO_APLICA");
+
   const counts = {
-    ABIERTO:  allPlans.filter((p) => p.status === "ABIERTO").length,
-    EN_CURSO: allPlans.filter((p) => p.status === "EN_CURSO").length,
-    CERRADO:  allPlans.filter((p) => p.status === "CERRADO").length,
-    VENCIDO:  allPlans.filter((p) => p.status === "VENCIDO").length,
+    ABIERTO:  activePlans.filter((p) => p.status === "ABIERTO").length,
+    EN_CURSO: activePlans.filter((p) => p.status === "EN_CURSO").length,
+    CERRADO:  activePlans.filter((p) => p.status === "CERRADO").length,
+    VENCIDO:  activePlans.filter((p) => p.status === "VENCIDO").length,
   };
 
-  const plans = allPlans.filter((p) => {
+  const plans = activePlans.filter((p) => {
     if (filterStatus && p.status !== filterStatus) return false;
     if (filterResponsable && p.responsable !== filterResponsable) return false;
     return true;
   });
 
-  // A law is "covered" if any of its requirements already has a plan.
-  const coveredReqIds = new Set(allPlans.map((p) => p.legalRequirementId).filter(Boolean));
+  // A law is "covered" if any of its requirements already has a plan (ignoring NO_APLICA plans).
+  const coveredReqIds = new Set(activePlans.map((p) => p.legalRequirementId).filter(Boolean));
   const coveredLeyKeys = new Set(
-    allPlans
+    activePlans
       .map((p) => {
         const lr = p.legalRequirement;
         if (!lr || !lr.tipoDocumento) return null;
@@ -122,7 +125,7 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
             ))}
           </div>
           <p className="mt-2 text-xs text-zinc-400 dark:text-zinc-500">
-            Total: {allPlans.length} plan{allPlans.length !== 1 ? "es" : ""} ·{" "}
+            Total: {activePlans.length} plan{activePlans.length !== 1 ? "es" : ""} ·{" "}
             {totalPendientes > 0
               ? `${totalPendientes} ley${totalPendientes !== 1 ? "es" : ""} sin plan aún`
               : "todas las leyes detectadas tienen plan"}
@@ -133,7 +136,7 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-              Planes creados ({plans.length}{allPlans.length !== plans.length ? ` de ${allPlans.length}` : ""})
+              Planes creados ({plans.length}{activePlans.length !== plans.length ? ` de ${activePlans.length}` : ""})
             </h2>
             <Suspense>
               <ActionPlanFilters />
@@ -157,7 +160,7 @@ export default async function PlanesAccionPage({ searchParams }: PageProps) {
           )}
         </section>
 
-        {totalPendientes === 0 && allPlans.length === 0 && (
+        {totalPendientes === 0 && activePlans.length === 0 && (
           <div className="rounded-lg border border-green-200 bg-green-50 p-8 text-center dark:border-green-800 dark:bg-green-900/20">
             <p className="text-lg font-semibold text-green-700 dark:text-green-400">¡Sin pendientes!</p>
             <p className="mt-1 text-sm text-green-600 dark:text-green-500">
