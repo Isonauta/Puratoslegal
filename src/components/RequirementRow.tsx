@@ -101,7 +101,7 @@ function ClasificacionBadge({ clasificacion }: { clasificacion: string }) {
   return <span className={cls}>{label}</span>;
 }
 
-export function RequirementRow({ requirement }: { requirement: Requirement }) {
+export function RequirementRow({ requirement, hasActionPlan = false }: { requirement: Requirement; hasActionPlan?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [cumple, setCumple] = useState(requirement.cumple);
@@ -157,8 +157,14 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
     router.refresh();
   }
 
+  const cardBg = fueraAlcance
+    ? "border-zinc-300 bg-white opacity-60 dark:border-zinc-700 dark:bg-zinc-900"
+    : hasActionPlan && cumple === "NO"
+    ? CUMPLE_BG.PENDIENTE
+    : CUMPLE_BG[cumple] ?? CUMPLE_BG.PENDIENTE;
+
   return (
-    <div className={`rounded-lg border shadow-sm transition-colors ${fueraAlcance ? "border-zinc-300 bg-white opacity-60 dark:border-zinc-700 dark:bg-zinc-900" : CUMPLE_BG[cumple] ?? CUMPLE_BG.PENDIENTE}`}>
+    <div className={`rounded-lg border shadow-sm transition-colors ${cardBg}`}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -176,6 +182,13 @@ export function RequirementRow({ requirement }: { requirement: Requirement }) {
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Responsable: {requirement.responsable ?? "Sin asignar"}
           </p>
+          {hasActionPlan && (
+            <p className="mt-0.5">
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                📋 En plan de acción
+              </span>
+            </p>
+          )}
           {(fueraAlcance || requirement.clasificacionSIG) && (
             <p className="mt-0.5">
               {fueraAlcance ? (

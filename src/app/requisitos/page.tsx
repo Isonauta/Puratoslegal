@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllRequirements, getLeyesDisponibles } from "@/lib/queries";
+import { getAllRequirements, getLeyesDisponibles, getAllActionPlans } from "@/lib/queries";
 import type { RequirementFilters } from "@/lib/queries";
 import { RequirementRow } from "@/components/RequirementRow";
 import { RequirementFiltersBar } from "@/components/RequirementFiltersBar";
@@ -25,10 +25,21 @@ export default async function RequisitosPage({
     q: params.q || undefined,
   };
 
-  const [requirements, leyes] = await Promise.all([
+  const [requirements, leyes, allPlans] = await Promise.all([
     getAllRequirements(filters),
     getLeyesDisponibles(),
+    getAllActionPlans(),
   ]);
+
+  const coveredLeyKeys = new Set(
+    allPlans
+      .map((p) => {
+        const lr = p.legalRequirement;
+        if (!lr?.tipoDocumento) return null;
+        return `${lr.tipoDocumento}|${lr.documentoNumero ?? ""}`;
+      })
+      .filter(Boolean) as string[]
+  );
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, v]) => v !== undefined) as [string, string][]
   ).toString();
@@ -64,7 +75,11 @@ export default async function RequisitosPage({
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Ningún requisito coincide con estos filtros.</p>
         )}
         {requirements.map((r) => (
-          <RequirementRow key={r.id} requirement={r} />
+          <RequirementRow
+            key={r.id}
+            requirement={r}
+            hasActionPlan={coveredLeyKeys.has(`${r.tipoDocumento}|${r.documentoNumero ?? ""}`)}
+          />
         ))}
       </main>
     </div>
