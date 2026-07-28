@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-black">
-      <header className="border-b border-zinc-200 bg-white px-6 py-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <header className="border-b border-zinc-200 bg-white px-4 py-4 sm:px-6 sm:py-5 dark:border-zinc-800 dark:bg-zinc-900">
         <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
           Dashboard de Cumplimiento Legal
         </h1>
@@ -65,15 +65,15 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">
+      <main className="mx-auto max-w-6xl space-y-8 px-3 py-6 sm:px-6 sm:py-8">
         <section>
-          <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="min-w-[120px]">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">Cumplimiento global</p>
                 <p className="mt-1 text-4xl font-bold text-zinc-900 dark:text-zinc-50">{overall.porcentaje}%</p>
               </div>
-              <dl className="flex gap-6 text-sm">
+              <dl className="flex flex-wrap gap-x-6 gap-y-3 text-sm sm:ml-auto">
                 <div className="text-center">
                   <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{overall.total}</dd>
                   <dt className="text-zinc-500 dark:text-zinc-400">Requisitos</dt>
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
         {/* Evidencia — sección destacada */}
         <section>
           <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-start justify-between gap-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   Evidencia documental
