@@ -182,7 +182,7 @@ export function RequirementRow({ requirement, hasActionPlan = false }: { require
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Responsable: {requirement.responsable ?? "Sin asignar"}
           </p>
-          {hasActionPlan && (
+          {hasActionPlan && cumple === "NO" && (
             <p className="mt-0.5">
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
                 📋 En plan de acción
