@@ -207,7 +207,7 @@ export async function getRequirementsNeedingActionPlan() {
       orderBy: { numero: "asc" },
     }),
     prisma.legalRequirement.findMany({
-      where: { cumple: "SI", evidenceLinks: { none: {} } },
+      where: { cumple: "SI", fueraAlcanceSIG: false, evidenceLinks: { none: {} } },
       select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true, tipoDocumento: true, documentoNumero: true, articulo: true, requisitoTexto: true },
       orderBy: { numero: "asc" },
     }),
