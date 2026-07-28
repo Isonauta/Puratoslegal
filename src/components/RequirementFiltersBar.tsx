@@ -35,8 +35,8 @@ export function RequirementFiltersBar({ filters, leyes }: { filters: Requirement
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Buscar por título, artículo, organismo..."
-        className="w-64 rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+        placeholder="Buscar título, artículo, organismo..."
+        className="w-full sm:w-64 rounded border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
       />
       <select
         value={filters.ambito ?? ""}

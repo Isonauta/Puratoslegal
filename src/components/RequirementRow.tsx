@@ -168,7 +168,7 @@ export function RequirementRow({ requirement, hasActionPlan = false }: { require
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
+        className="flex w-full flex-col gap-2 px-4 py-3 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4"
       >
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
@@ -214,17 +214,17 @@ export function RequirementRow({ requirement, hasActionPlan = false }: { require
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
           <select
             value={responsable}
             disabled={saving}
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => updateResponsable(e.target.value)}
-            className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+            className="max-w-[140px] rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
           >
             <option value="">Sin asignar</option>
             {RESPONSABLES.map((r) => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>{r.split(" ")[0]}</option>
             ))}
           </select>
           <select
@@ -241,7 +241,7 @@ export function RequirementRow({ requirement, hasActionPlan = false }: { require
             ))}
           </select>
           <EvidenceBadge links={requirement.evidenceLinks} cumple={cumple} />
-          <span className="text-zinc-400">{open ? "▲" : "▼"}</span>
+          <span className="ml-auto text-zinc-400 sm:ml-0">{open ? "▲" : "▼"}</span>
         </div>
       </button>
 
