@@ -233,3 +233,23 @@ export async function getAllDocumentos() {
     orderBy: [{ clausula: "asc" }, { createdAt: "desc" }],
   });
 }
+
+export async function getCalendarEvents() {
+  const [plans, permits] = await Promise.all([
+    prisma.actionPlan.findMany({
+      where: { fechaEjecucion: { not: null }, status: { not: "CERRADO" } },
+      select: {
+        id: true, titulo: true, responsable: true, status: true,
+        fechaEjecucion: true, tipoDocumento: true, documentoNumero: true,
+        legalRequirement: { select: { numero: true, ambito: true } },
+      },
+      orderBy: { fechaEjecucion: "asc" },
+    }),
+    prisma.permit.findMany({
+      where: { proximoVencimiento: { not: null } },
+      select: { id: true, numero: true, nombre: true, categoria: true, proximoVencimiento: true, estadoSugerido: true },
+      orderBy: { proximoVencimiento: "asc" },
+    }),
+  ]);
+  return { plans, permits };
+}
