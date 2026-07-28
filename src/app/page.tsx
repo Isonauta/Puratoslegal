@@ -85,6 +85,7 @@ export default async function DashboardPage() {
                 <div className="text-center">
                   <dd className="text-lg font-semibold text-amber-600 dark:text-amber-400">{overall.pendiente}</dd>
                   <dt className="text-zinc-500 dark:text-zinc-400">Sin evaluar</dt>
+                  <dt className="text-xs text-zinc-400 dark:text-zinc-500">todos los responsables</dt>
                 </div>
               </dl>
             </div>
@@ -242,12 +243,20 @@ export default async function DashboardPage() {
                       <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
                     </div>
                     <p className="mt-1 text-xs text-zinc-400">con evidencia / {r.total} requisitos</p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                      <span className="text-green-700 dark:text-green-400">✓ {r.cumple}</span>
-                      {r.cumpleSinEvidencia > 0 && (
-                        <span className="text-orange-600 dark:text-orange-400">⚠ {r.cumpleSinEvidencia} sin evidencia</span>
-                      )}
-                      {attention > 0 && <span className="text-amber-700 dark:text-amber-400">⏳ {r.pendiente + r.noCumple} por resolver</span>}
+                    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                      <span className="text-green-700 dark:text-green-400">✓ {r.cumple} cumple</span>
+                      {r.cumpleSinEvidencia > 0
+                        ? <span className="text-orange-600 dark:text-orange-400">⚠ {r.cumpleSinEvidencia} sin evidencia</span>
+                        : <span className="text-zinc-400">— sin evidencia faltante</span>
+                      }
+                      {r.pendiente > 0
+                        ? <span className="text-amber-600 dark:text-amber-400">⏳ {r.pendiente} sin evaluar</span>
+                        : <span className="text-zinc-400">— todo evaluado</span>
+                      }
+                      {r.noCumple > 0
+                        ? <span className="text-red-600 dark:text-red-400">✗ {r.noCumple} no cumple</span>
+                        : <span className="text-zinc-400">— sin incumplimientos</span>
+                      }
                     </div>
                   </div>
                 );
