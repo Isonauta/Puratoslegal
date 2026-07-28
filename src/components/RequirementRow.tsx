@@ -175,7 +175,15 @@ export function RequirementRow({ requirement, hasActionPlan = false }: { require
             N°{requirement.numero} · {requirement.ambito} — {requirement.titulo}
           </p>
           <p className="mt-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
-            {requirement.tipoDocumento}{requirement.documentoNumero ? ` N°${requirement.documentoNumero}` : ""}
+            <a
+              href={`https://www.bcn.cl/leychile/buscar?q=${encodeURIComponent(`${requirement.tipoDocumento}${requirement.documentoNumero ? ` ${requirement.documentoNumero}` : ""}`)}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="hover:underline"
+            >
+              {requirement.tipoDocumento}{requirement.documentoNumero ? ` N°${requirement.documentoNumero}` : ""}
+            </a>
             {requirement.articulo ? ` · Art. ${requirement.articulo}` : ""}
             <span className="ml-2 font-normal text-zinc-400">{requirement.organismo}</span>
           </p>
@@ -199,7 +207,7 @@ export function RequirementRow({ requirement, hasActionPlan = false }: { require
             </p>
           )}
           {requirement.requisitoTexto && (
-            <p className="mt-1 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               {requirement.requisitoTexto}
             </p>
           )}
