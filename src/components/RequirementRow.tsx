@@ -176,7 +176,9 @@ export function RequirementRow({ requirement, hasActionPlan = false }: { require
           </p>
           <p className="mt-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
             <a
-              href={`https://www.bcn.cl/leychile/buscar?q=${encodeURIComponent(`${requirement.tipoDocumento}${requirement.documentoNumero ? ` ${requirement.documentoNumero}` : ""}`)}`}
+              href={requirement.documentoNumero
+                ? `https://www.bcn.cl/leychile/buscar?tipo_norma=&numero=${requirement.documentoNumero}&anio=`
+                : "https://www.bcn.cl/leychile"}
               target="_blank"
               rel="noreferrer"
               onClick={(e) => e.stopPropagation()}
