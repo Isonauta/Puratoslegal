@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 export default async function PermitDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect(`/login?from=/pts/permits/${id}`);
 
   const role = (session.role ?? "ADMIN") as UserRole;
 

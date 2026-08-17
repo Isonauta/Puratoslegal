@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewPermitPage() {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/login?from=/pts/permits/new");
 
   const role = (session.role ?? "ADMIN") as UserRole;
   const allowed: UserRole[] = ["SOLICITANTE", "CONTRATISTA", "ADMIN"];

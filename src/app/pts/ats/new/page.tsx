@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewAtsPage({ searchParams }: { searchParams: Promise<{ permitId?: string }> }) {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/login?from=/pts/ats/new");
 
   const role = (session.role ?? "ADMIN") as UserRole;
   const { permitId } = await searchParams;

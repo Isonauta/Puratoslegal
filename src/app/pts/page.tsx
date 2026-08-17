@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PtsDashboard() {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/login?from=/pts");
 
   const userId = session.id;
   const role = (session.role ?? "ADMIN") as UserRole;
