@@ -120,7 +120,7 @@ export default async function PtsDashboard({
                     .sort((a, b) => b[1] - a[1])
                     .map(([type, count]) => (
                       <li key={type} className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-gray-700 truncate">{PERMIT_TYPE_LABELS[type] ?? type}</span>
+                        <span className="text-sm text-gray-700 truncate">{PERMIT_TYPE_LABELS[type as keyof typeof PERMIT_TYPE_LABELS] ?? type}</span>
                         <span className="text-sm font-bold text-gray-700 shrink-0">{count}</span>
                       </li>
                     ))}
