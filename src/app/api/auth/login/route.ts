@@ -30,7 +30,11 @@ export async function POST(req: NextRequest) {
     companyId: "companyId" in user ? (user.companyId as string | null) : null,
   });
 
+  const secure = process.env.NODE_ENV === "production";
+  const maxAge = 60 * 60 * 24 * 7;
+  const cookieStr = `pl_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
+
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(SESSION_COOKIE_OPTIONS.name, token, SESSION_COOKIE_OPTIONS);
+  response.headers.append("Set-Cookie", cookieStr);
   return response;
 }
