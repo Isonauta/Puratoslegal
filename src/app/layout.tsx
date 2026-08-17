@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Puratoslegal — Cumplimiento Legal",
+  title: "Purasafe — Cumplimiento Legal",
   description: "Plataforma de cumplimiento legal y evidencia documental",
 };
 
