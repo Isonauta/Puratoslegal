@@ -1,9 +1,5 @@
-import { jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
-const SECRET = new TextEncoder().encode(
-  process.env.AUTH_SECRET ?? "fallback-dev-secret-change-in-prod"
-);
 const COOKIE = "pl_session";
 const PUBLIC = ["/login", "/api/auth"];
 
@@ -12,15 +8,9 @@ export async function middleware(req: NextRequest) {
 
   if (PUBLIC.some((p) => pathname.startsWith(p))) return NextResponse.next();
 
-  const token = req.cookies.get(COOKIE)?.value;
-  if (token) {
-    try {
-      await jwtVerify(token, SECRET);
-      return NextResponse.next();
-    } catch {
-      // invalid/expired token — fall through to redirect
-    }
-  }
+  // Only check cookie presence here — JWT verification happens in getSession()
+  // inside each page/route, which runs in Node.js runtime with full env access.
+  if (req.cookies.get(COOKIE)?.value) return NextResponse.next();
 
   const url = req.nextUrl.clone();
   url.pathname = "/login";
