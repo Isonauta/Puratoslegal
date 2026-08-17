@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { prisma } from "@/lib/db";
 
 const SECRET = new TextEncoder().encode(
   process.env.AUTH_SECRET ?? "fallback-dev-secret-change-in-prod"
@@ -7,13 +8,23 @@ const SECRET = new TextEncoder().encode(
 const COOKIE = "pl_session";
 
 export type SessionUser = {
+  id: string | null;
   email: string;
   name: string;
   responsable: string | null;
   isAdmin: boolean;
+  role: string | null;
+  companyId: string | null;
 };
 
-const USERS: { email: string; name: string; responsable: string | null; isAdmin: boolean; hash: string }[] = [
+// Hardcoded fallback users (Legal module — kept for backward compatibility)
+const LEGACY_USERS: {
+  email: string;
+  name: string;
+  responsable: string | null;
+  isAdmin: boolean;
+  hash: string;
+}[] = [
   {
     email: "scorroteaortiz@puratos.com",
     name: "Sebastián Corrotea",
@@ -44,12 +55,34 @@ const USERS: { email: string; name: string; responsable: string | null; isAdmin:
   },
 ];
 
-export function findUser(email: string) {
-  return USERS.find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? null;
+// Lookup by email: DB first, then legacy hardcoded list.
+export async function findUser(email: string) {
+  const normalized = email.toLowerCase();
+
+  // Try DB user (PTS users and migrated Legal users)
+  try {
+    const dbUser = await prisma.user.findUnique({ where: { email: normalized } });
+    if (dbUser) return { ...dbUser, responsable: null, isLegacy: false };
+  } catch {
+    // DB not ready yet — fall through to legacy
+  }
+
+  const legacy = LEGACY_USERS.find((u) => u.email.toLowerCase() === normalized);
+  if (legacy) return { ...legacy, id: null, role: null, companyId: null, isLegacy: true };
+
+  return null;
 }
 
 export async function createSession(user: SessionUser) {
-  const token = await new SignJWT({ email: user.email, name: user.name, responsable: user.responsable, isAdmin: user.isAdmin })
+  const token = await new SignJWT({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    responsable: user.responsable,
+    isAdmin: user.isAdmin,
+    role: user.role,
+    companyId: user.companyId,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
     .sign(SECRET);
@@ -71,10 +104,13 @@ export async function getSession(): Promise<SessionUser | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET);
     return {
+      id: (payload.id as string | null) ?? null,
       email: payload.email as string,
       name: payload.name as string,
       responsable: (payload.responsable as string | null) ?? null,
       isAdmin: (payload.isAdmin as boolean) ?? false,
+      role: (payload.role as string | null) ?? null,
+      companyId: (payload.companyId as string | null) ?? null,
     };
   } catch {
     return null;

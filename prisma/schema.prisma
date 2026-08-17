@@ -214,3 +214,356 @@ model Documento {
   @@index([clausula])
   @@index([norma])
 }
+
+// =============================================================================
+// PTS — Permiso de Trabajo Seguro (F-SHE-G-001 v02)
+// =============================================================================
+
+enum UserRole {
+  SOLICITANTE
+  SUPERVISOR
+  SHE
+  CONTRATISTA
+  ADMIN
+}
+
+enum PermitStatus {
+  BORRADOR
+  ENVIADO_A_APROBACION
+  APROBADO_SUPERVISOR
+  AUTORIZADO_SHE
+  EN_CURSO
+  CERRADO
+  SUSPENDIDO
+  ANULADO
+}
+
+enum Shift {
+  DIA
+  TARDE
+  NOCHE
+}
+
+enum PermitType {
+  ALTURA_FISICA
+  TRABAJO_CALIENTE
+  ESPACIO_CONFINADO
+  LOTO_BLOQUEO_ENERGIA
+  EXCAVACION_ZANJAS
+  TRABAJOS_ELECTRICOS
+  IZAJE_GRUA
+  TRABAJOS_NOCTURNOS
+  OTRO
+}
+
+enum HazardType {
+  TRABAJO_ALTURA_FISICA
+  CAIDA_MISMO_DISTINTO_NIVEL
+  TRABAJO_CALIENTE
+  ESPACIO_CONFINADO
+  ENERGIA_PELIGROSA_LOTO
+  CONTACTO_ELECTRICIDAD
+  EXPOSICION_RUIDO
+  EXPOSICION_RADIACION_UV
+  EXPOSICION_QUIMICOS
+  PROYECCION_PARTICULAS
+  CILINDROS_PRESION
+  ILUMINACION_DEFICIENTE
+  SUPERFICIE_DEFECTUOSA
+  TRASLADO_MATERIALES
+  SOBRESFUERZO_FISICO
+  APRISIONAMIENTO
+  GOLPEADO_POR_CONTRA_OBJETO
+  INCENDIO_EXPLOSION
+  LIBERACION_GAS_ENERGIA
+  HERR_ELECTRICAS_MANUALES
+  POSICION_INCORRECTA
+  LINEAS_ENERGIZADAS_CERCANAS
+  DEFICIENCIA_O2
+  OTRO
+}
+
+enum ControlMeasure {
+  ATS_APLICADO_ANTES_INICIAR
+  DELIMITACION_SENALIZACION
+  BLOQUEO_LOTO_EJECUTADO
+  PERMISO_ESPACIO_CONFINADO
+  ARNES_DOS_COLAS_VIDA
+  VIGIA_RESCATISTA_DESIGNADO
+  EXTENSIONES_ELECTRICAS_OK
+  HERRAMIENTAS_INSPECCIONADAS
+  ILUMINACION_ADECUADA
+  VENTILACION_ADECUADA
+  COORD_CON_CLIENTE_REALIZADA
+  PAUSAS_ROTACION_PERSONAL
+  CERT_MEDICO_ALTURA_VIGENTE
+  CAPACITACION_TAREA_ESPECIFICA
+  HOJAS_SEGURIDAD_DISPONIBLES
+  ORDEN_ASEO_AREA
+  LEVANTE_25KG_INDIVIDUAL
+  TRABAJO_CON_AYUDANTE
+  DETENER_ANTE_PELIGRO
+  TRANSITO_VIAS_EXPEDITAS
+  PLAN_EMERGENCIA_CONOCIDO
+  PROTEGER_AREAS_DERRAMES
+  INSPECCIONAR_HERR_EQUIPOS
+  OTRO
+}
+
+enum PpeType {
+  CASCO_SEGURIDAD
+  ZAPATOS_BOTINES_SEGURIDAD
+  LENTES_SEGURIDAD
+  PROTECCION_OCULAR_LATERAL_SUPERIOR
+  CARETA_ROSTRO_COMPLETO
+  PROTECCION_AUDITIVA
+  RESPIRADOR_POLVO_VAPORES
+  GUANTES
+  ROPA_TRABAJO_OVEROL
+  ROPA_RETARDANTE_FUEGO
+  ARNES_LINEA_VIDA
+  EQUIPO_ESPECIAL_SOLDADURA
+  CREMA_PROTECCION_UV
+  CHALECO_REFLECTANTE
+  OTRO
+}
+
+enum GasType {
+  O2
+  CO
+  H2S
+  LEL
+}
+
+enum SignatureRole {
+  SOLICITANTE
+  SUPERVISOR_APRUEBA
+  SHE_AUTORIZA
+  SUPERVISOR_RECEPCIONA_CIERRE
+  ATS_RESPONSABLE
+  ATS_SUPERVISOR_VALIDA
+  ATS_TRABAJADOR
+  PTS_TRABAJADOR
+}
+
+enum AreaCondition {
+  LIMPIA_Y_SEGURA
+  CON_OBSERVACIONES
+}
+
+enum PotentialIncidentType {
+  CAIDA_ALTURA
+  CAIDA_MISMO_NIVEL
+  QUEMADURA
+  ASFIXIA_INTOXICACION
+  ELECTROCUCION
+  ATRAPAMIENTO
+  GOLPE_OBJETO
+  CORTE_LACERACION
+  EXPLOSION_INCENDIO
+  EXPOSICION_QUIMICA
+  SOBRESFUERZO_LESION_MUSCULAR
+  DERRUMBE_COLAPSO
+  OTRO
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  rut          String?
+  role         UserRole @default(ADMIN)
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  permitsCreated    WorkPermit[]      @relation("PermitSolicitante")
+  permitsSupervised WorkPermit[]      @relation("PermitSupervisor")
+  statusTransitions PermitStatusLog[]
+  signatures        Signature[]
+  atsCreated        ATS[]             @relation("ATSResponsable")
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  rut       String   @unique
+  createdAt DateTime @default(now())
+
+  users       User[]
+  workPermits WorkPermit[]
+}
+
+model WorkPermit {
+  id           String @id @default(cuid())
+  permitNumber Int    @unique @default(autoincrement())
+
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id])
+  companyRut        String
+  date              DateTime
+  area              String
+  shift             Shift
+  startTime         DateTime
+  endTime           DateTime
+  taskDescription   String
+  solicitanteId     String
+  solicitante       User     @relation("PermitSolicitante", fields: [solicitanteId], references: [id])
+  supervisorId      String?
+  supervisor        User?    @relation("PermitSupervisor", fields: [supervisorId], references: [id])
+  contractorCompany String?
+  workerCount       Int      @default(0)
+
+  permitTypes         PermitType[]
+  permitTypeOtherText String?
+  hazards             HazardType[]
+  hazardOtherText     String?
+  controlMeasures     ControlMeasure[]
+  controlMeasureOtherText String?
+  ppeRequired         PpeType[]
+  ppeGlovesType       String?
+  ppeOtherText        String?
+  ppeObservations     String?
+
+  actualEndTime     DateTime?
+  areaCondition     AreaCondition?
+  closeObservations String?
+
+  status PermitStatus @default(BORRADOR)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workers            Worker[]
+  atmosphereReadings AtmosphereReading[]
+  signatures         Signature[]
+  statusLogs         PermitStatusLog[]
+  atsList            ATS[]
+}
+
+model PermitStatusLog {
+  id           String        @id @default(cuid())
+  workPermitId String
+  workPermit   WorkPermit    @relation(fields: [workPermitId], references: [id], onDelete: Cascade)
+  fromStatus   PermitStatus?
+  toStatus     PermitStatus
+  changedById  String
+  changedBy    User          @relation(fields: [changedById], references: [id])
+  comment      String?
+  createdAt    DateTime      @default(now())
+}
+
+model Worker {
+  id                        String     @id @default(cuid())
+  workPermitId              String
+  workPermit                WorkPermit @relation(fields: [workPermitId], references: [id], onDelete: Cascade)
+  order                     Int
+  fullName                  String
+  rut                       String
+  position                  String
+  company                   String
+  hasAltitudeMedicalCert    Boolean    @default(false)
+  altitudeMedicalCertExpiry DateTime?
+  inductionCompleted        Boolean    @default(false)
+  signatureImage            String?
+  signedAt                  DateTime?
+  createdAt                 DateTime   @default(now())
+}
+
+model AtmosphereReading {
+  id              String     @id @default(cuid())
+  workPermitId    String
+  workPermit      WorkPermit @relation(fields: [workPermitId], references: [id], onDelete: Cascade)
+  gas             GasType
+  reading1        Float?
+  reading2        Float?
+  reading3        Float?
+  instrument      String?
+  responsibleName String?
+  createdAt       DateTime   @default(now())
+}
+
+model Signature {
+  id         String        @id @default(cuid())
+  role       SignatureRole
+  signerName String
+  signerRut  String?
+  imageData  String
+  signedAt   DateTime      @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  workPermitId String?
+  workPermit   WorkPermit? @relation(fields: [workPermitId], references: [id], onDelete: Cascade)
+
+  atsId String?
+  ats   ATS?    @relation(fields: [atsId], references: [id], onDelete: Cascade)
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+}
+
+model ATS {
+  id String @id @default(cuid())
+
+  workPermitId String?
+  workPermit   WorkPermit? @relation(fields: [workPermitId], references: [id])
+
+  companyName     String
+  area            String
+  date            DateTime
+  startTime       DateTime
+  endTime         DateTime
+  taskDescription String
+
+  responsibleId String
+  responsible   User   @relation("ATSResponsable", fields: [responsibleId], references: [id])
+
+  supervisorValidatesName String?
+  supervisorValidatesRut  String?
+
+  highRiskProcedures     PermitType[]
+  potentialIncidents     PotentialIncidentType[]
+  potentialIncidentOther String?
+  controlMeasures        ControlMeasure[]
+  controlMeasureOther    String?
+  ppeRequired            PpeType[]
+  ppeOtherText           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  steps      ATSStep[]
+  workers    ATSWorker[]
+  signatures Signature[]
+}
+
+model ATSStep {
+  id                 String   @id @default(cuid())
+  atsId              String
+  ats                ATS      @relation(fields: [atsId], references: [id], onDelete: Cascade)
+  order              Int
+  taskStage          String
+  hazardsExposed     String
+  potentialIncidents String
+  controls           String
+  createdAt          DateTime @default(now())
+}
+
+model ATSWorker {
+  id                String    @id @default(cuid())
+  atsId             String
+  ats               ATS       @relation(fields: [atsId], references: [id], onDelete: Cascade)
+  order             Int
+  fullName          String
+  rut               String
+  medicalCertExpiry DateTime?
+  signatureImage    String?
+  signedAt          DateTime?
+  createdAt         DateTime  @default(now())
+}
