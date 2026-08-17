@@ -8,13 +8,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await req.json();
 
-  const data: {
-    status?: ActionPlanStatus;
-    responsable?: string | null;
-    titulo?: string;
-    accionCorrectiva?: string;
-    fechaEjecucion?: Date | null;
-  } = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: Record<string, any> = {};
 
   if (body.status !== undefined) {
     if (!STATUS_VALUES.includes(body.status)) {
@@ -28,6 +23,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.fechaEjecucion !== undefined) {
     data.fechaEjecucion = body.fechaEjecucion ? new Date(body.fechaEjecucion) : null;
   }
+  if (body.evidenciaUrl !== undefined) data.evidenciaUrl = body.evidenciaUrl || null;
+  if (body.evidenciaProvider !== undefined) data.evidenciaProvider = body.evidenciaProvider || null;
+  if (body.evidenciaNombre !== undefined) data.evidenciaNombre = body.evidenciaNombre || null;
 
   const actionPlan = await prisma.actionPlan.update({ where: { id }, data });
   return NextResponse.json(actionPlan);

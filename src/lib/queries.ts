@@ -57,7 +57,7 @@ export async function getOpenActionPlans() {
   return prisma.actionPlan.findMany({
     where: { status: { not: "CERRADO" } },
     orderBy: { fechaEjecucion: "asc" },
-    include: { legalRequirement: { select: { numero: true, ambito: true, titulo: true } } },
+    include: { legalRequirement: { select: { numero: true, ambito: true, titulo: true, tipoDocumento: true, documentoNumero: true } } },
   });
 }
 
@@ -145,7 +145,7 @@ export async function getAllRequirements(filters: RequirementFilters = {}) {
 export async function getAllActionPlans() {
   return prisma.actionPlan.findMany({
     orderBy: [{ status: "asc" }, { fechaEjecucion: "asc" }],
-    include: { legalRequirement: { select: { numero: true, ambito: true, titulo: true } } },
+    include: { legalRequirement: { select: { numero: true, ambito: true, titulo: true, tipoDocumento: true, documentoNumero: true, cumple: true } } },
   });
 }
 
@@ -200,16 +200,15 @@ export async function getResponsablesSummary() {
 }
 
 export async function getRequirementsNeedingActionPlan() {
-  // Requisitos que no cumplen o que cumplen sin evidencia, y aún no tienen plan abierto
   const [noCumple, sinEvidencia] = await Promise.all([
     prisma.legalRequirement.findMany({
-      where: { cumple: "NO" },
-      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true },
+      where: { cumple: "NO", fueraAlcanceSIG: false },
+      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true, tipoDocumento: true, documentoNumero: true, articulo: true, requisitoTexto: true },
       orderBy: { numero: "asc" },
     }),
     prisma.legalRequirement.findMany({
-      where: { cumple: "SI", evidenceLinks: { none: {} } },
-      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true },
+      where: { cumple: "SI", fueraAlcanceSIG: false, evidenceLinks: { none: {} } },
+      select: { id: true, numero: true, titulo: true, ambito: true, responsable: true, cumple: true, tipoDocumento: true, documentoNumero: true, articulo: true, requisitoTexto: true },
       orderBy: { numero: "asc" },
     }),
   ]);
@@ -227,4 +226,30 @@ export async function getPermitsNeedingAttention() {
     },
     orderBy: { numero: "asc" },
   });
+}
+
+export async function getAllDocumentos() {
+  return prisma.documento.findMany({
+    orderBy: [{ clausula: "asc" }, { createdAt: "desc" }],
+  });
+}
+
+export async function getCalendarEvents() {
+  const [plans, permits] = await Promise.all([
+    prisma.actionPlan.findMany({
+      where: { fechaEjecucion: { not: null }, status: { not: "CERRADO" } },
+      select: {
+        id: true, titulo: true, responsable: true, status: true,
+        fechaEjecucion: true, tipoDocumento: true, documentoNumero: true,
+        legalRequirement: { select: { numero: true, ambito: true } },
+      },
+      orderBy: { fechaEjecucion: "asc" },
+    }),
+    prisma.permit.findMany({
+      where: { proximoVencimiento: { not: null } },
+      select: { id: true, numero: true, nombre: true, categoria: true, proximoVencimiento: true, estadoSugerido: true },
+      orderBy: { proximoVencimiento: "asc" },
+    }),
+  ]);
+  return { plans, permits };
 }

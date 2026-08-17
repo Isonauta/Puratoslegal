@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-black">
-      <header className="border-b border-zinc-200 bg-white px-6 py-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <header className="border-b border-zinc-200 bg-white px-4 py-4 sm:px-6 sm:py-5 dark:border-zinc-800 dark:bg-zinc-900">
         <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
           Dashboard de Cumplimiento Legal
         </h1>
@@ -46,9 +46,17 @@ export default async function DashboardPage() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
             Planes de acción
           </Link>
+          <Link href="/documentos" className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-300">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-4.414-4.414A1 1 0 0013.586 4H7a2 2 0 00-2 2v13a2 2 0 002 2z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 11v6m0 0l-2.5-2.5M12 17l2.5-2.5" /></svg>
+            Documentos
+          </Link>
           <Link href="/mis-tareas" className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-300">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
             Mis tareas
+          </Link>
+          <Link href="/calendario" className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-300">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            Agenda
           </Link>
           <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 dark:border-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
@@ -61,15 +69,15 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">
+      <main className="mx-auto max-w-6xl space-y-8 px-3 py-6 sm:px-6 sm:py-8">
         <section>
-          <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="min-w-[120px]">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">Cumplimiento global</p>
                 <p className="mt-1 text-4xl font-bold text-zinc-900 dark:text-zinc-50">{overall.porcentaje}%</p>
               </div>
-              <dl className="flex gap-6 text-sm">
+              <dl className="flex flex-wrap gap-x-6 gap-y-3 text-sm sm:ml-auto">
                 <div className="text-center">
                   <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{overall.total}</dd>
                   <dt className="text-zinc-500 dark:text-zinc-400">Requisitos</dt>
@@ -81,6 +89,7 @@ export default async function DashboardPage() {
                 <div className="text-center">
                   <dd className="text-lg font-semibold text-amber-600 dark:text-amber-400">{overall.pendiente}</dd>
                   <dt className="text-zinc-500 dark:text-zinc-400">Sin evaluar</dt>
+                  <dt className="text-xs text-zinc-400 dark:text-zinc-500">todos los responsables</dt>
                 </div>
               </dl>
             </div>
@@ -101,7 +110,7 @@ export default async function DashboardPage() {
         {/* Evidencia — sección destacada */}
         <section>
           <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-start justify-between gap-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   Evidencia documental
@@ -238,12 +247,20 @@ export default async function DashboardPage() {
                       <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
                     </div>
                     <p className="mt-1 text-xs text-zinc-400">con evidencia / {r.total} requisitos</p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                      <span className="text-green-700 dark:text-green-400">✓ {r.cumple}</span>
-                      {r.cumpleSinEvidencia > 0 && (
-                        <span className="text-orange-600 dark:text-orange-400">⚠ {r.cumpleSinEvidencia} sin evidencia</span>
-                      )}
-                      {attention > 0 && <span className="text-amber-700 dark:text-amber-400">⏳ {r.pendiente + r.noCumple} por resolver</span>}
+                    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                      <span className="text-green-700 dark:text-green-400">✓ {r.cumple} cumple</span>
+                      {r.cumpleSinEvidencia > 0
+                        ? <span className="text-orange-600 dark:text-orange-400">⚠ {r.cumpleSinEvidencia} sin evidencia</span>
+                        : <span className="text-zinc-400">— sin evidencia faltante</span>
+                      }
+                      {r.pendiente > 0
+                        ? <span className="text-amber-600 dark:text-amber-400">⏳ {r.pendiente} sin evaluar</span>
+                        : <span className="text-zinc-400">— todo evaluado</span>
+                      }
+                      {r.noCumple > 0
+                        ? <span className="text-red-600 dark:text-red-400">✗ {r.noCumple} no cumple</span>
+                        : <span className="text-zinc-400">— sin incumplimientos</span>
+                      }
                     </div>
                   </div>
                 );

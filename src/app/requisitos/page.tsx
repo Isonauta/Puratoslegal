@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllRequirements, getLeyesDisponibles } from "@/lib/queries";
+import { getAllRequirements, getLeyesDisponibles, getAllActionPlans } from "@/lib/queries";
 import type { RequirementFilters } from "@/lib/queries";
 import { RequirementRow } from "@/components/RequirementRow";
 import { RequirementFiltersBar } from "@/components/RequirementFiltersBar";
@@ -25,19 +25,30 @@ export default async function RequisitosPage({
     q: params.q || undefined,
   };
 
-  const [requirements, leyes] = await Promise.all([
+  const [requirements, leyes, allPlans] = await Promise.all([
     getAllRequirements(filters),
     getLeyesDisponibles(),
+    getAllActionPlans(),
   ]);
+
+  const coveredLeyKeys = new Set(
+    allPlans
+      .map((p) => {
+        const lr = p.legalRequirement;
+        if (!lr?.tipoDocumento) return null;
+        return `${lr.tipoDocumento}|${lr.documentoNumero ?? ""}`;
+      })
+      .filter(Boolean) as string[]
+  );
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, v]) => v !== undefined) as [string, string][]
   ).toString();
 
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-black">
-      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-6 py-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between">
-          <div>
+      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-4 sm:px-6 sm:py-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
             <Link href="/" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
               ← Volver al dashboard
             </Link>
@@ -46,25 +57,29 @@ export default async function RequisitosPage({
             </h1>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               {requirements.length} requisito{requirements.length === 1 ? "" : "s"} · actualiza el cumplimiento y
-              vincula evidencia (SharePoint / Google Drive).
+              vincula evidencia.
             </p>
           </div>
           <a
             href={`/api/export/requisitos${exportQuery ? `?${exportQuery}` : ""}`}
-            className="rounded border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className="shrink-0 rounded border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
           >
-            Exportar a Excel
+            Exportar
           </a>
         </div>
         <RequirementFiltersBar filters={filters} leyes={leyes} />
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-3 px-6 py-8">
+      <main className="mx-auto max-w-6xl space-y-3 px-3 py-6 sm:px-6 sm:py-8">
         {requirements.length === 0 && (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Ningún requisito coincide con estos filtros.</p>
         )}
         {requirements.map((r) => (
-          <RequirementRow key={r.id} requirement={r} />
+          <RequirementRow
+            key={r.id}
+            requirement={r}
+            hasActionPlan={coveredLeyKeys.has(`${r.tipoDocumento}|${r.documentoNumero ?? ""}`)}
+          />
         ))}
       </main>
     </div>
