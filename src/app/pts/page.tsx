@@ -13,10 +13,8 @@ export default async function PtsDashboard() {
   const session = await getSession();
   if (!session) redirect("/login?from=/pts");
 
-  const userId = session.id;
+  const userId = session.id ?? "";
   const role = (session.role ?? "ADMIN") as UserRole;
-
-  if (!userId) redirect("/login");
 
   const permits = await listPermitsForUser(userId, role);
 
