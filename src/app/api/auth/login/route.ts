@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { findUser, createSession } from "@/lib/auth";
+import { findUser, createSessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const { email, password } = await req.json();
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
   }
 
-  await createSession({
+  const token = await createSessionToken({
     id: user.id ?? null,
     email: user.email,
     name: user.name,
@@ -29,5 +29,8 @@ export async function POST(req: NextRequest) {
     role: "role" in user ? (user.role as string | null) : null,
     companyId: "companyId" in user ? (user.companyId as string | null) : null,
   });
-  return NextResponse.json({ ok: true });
+
+  const response = NextResponse.json({ ok: true });
+  response.cookies.set(SESSION_COOKIE_OPTIONS.name, token, SESSION_COOKIE_OPTIONS);
+  return response;
 }

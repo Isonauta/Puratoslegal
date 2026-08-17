@@ -73,8 +73,8 @@ export async function findUser(email: string) {
   return null;
 }
 
-export async function createSession(user: SessionUser) {
-  const token = await new SignJWT({
+export async function createSessionToken(user: SessionUser): Promise<string> {
+  return new SignJWT({
     id: user.id,
     email: user.email,
     name: user.name,
@@ -86,15 +86,22 @@ export async function createSession(user: SessionUser) {
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
     .sign(SECRET);
+}
 
+export const SESSION_COOKIE_OPTIONS = {
+  name: COOKIE,
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  maxAge: 60 * 60 * 24 * 7,
+  path: "/",
+};
+
+/** @deprecated Use createSessionToken + set cookie on NextResponse directly */
+export async function createSession(user: SessionUser) {
+  const token = await createSessionToken(user);
   const jar = await cookies();
-  jar.set(COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7,
-    path: "/",
-  });
+  jar.set(COOKIE, token, SESSION_COOKIE_OPTIONS);
 }
 
 export async function getSession(): Promise<SessionUser | null> {
