@@ -100,6 +100,7 @@ export default async function RequisitosPage({
             organismo={g.organismo}
             requirements={g.items}
             coveredLeyKeys={coveredLeyKeys}
+            isAdmin={session?.isAdmin ?? false}
           />
         ))}
       </main>

@@ -8,7 +8,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await req.json();
 
-  const data: { cumple?: CumpleEstado; responsable?: string | null; justificacionNoAplica?: string | null; formaCumplimiento?: string | null; fueraAlcanceSIG?: boolean } = {};
+  const data: { cumple?: CumpleEstado; responsable?: string | null; justificacionNoAplica?: string | null; formaCumplimiento?: string | null; fueraAlcanceSIG?: boolean; nombreLey?: string | null } = {};
   if (body.cumple !== undefined) {
     if (!VALID_CUMPLE.includes(body.cumple)) {
       return NextResponse.json({ error: "invalid cumple value" }, { status: 400 });
@@ -26,6 +26,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   if (body.fueraAlcanceSIG !== undefined) {
     data.fueraAlcanceSIG = Boolean(body.fueraAlcanceSIG);
+  }
+  if (body.nombreLey !== undefined) {
+    data.nombreLey = body.nombreLey || null;
   }
 
   const updated = await prisma.legalRequirement.update({ where: { id }, data });

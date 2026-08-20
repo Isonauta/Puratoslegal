@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { RequirementRow } from "./RequirementRow";
 
 type Requirement = Parameters<typeof RequirementRow>[0]["requirement"];
@@ -11,10 +12,15 @@ type Props = {
   organismo: string;
   requirements: Requirement[];
   coveredLeyKeys: Set<string>;
+  isAdmin?: boolean;
 };
 
-export function LawGroupCard({ tipoDocumento, documentoNumero, organismo, requirements, coveredLeyKeys }: Props) {
+export function LawGroupCard({ tipoDocumento, documentoNumero, organismo, requirements, coveredLeyKeys, isAdmin }: Props) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nombreLeyEdit, setNombreLeyEdit] = useState(requirements[0]?.nombreLey ?? "");
+  const [savingName, setSavingName] = useState(false);
 
   const cumpleCount    = requirements.filter(r => r.cumple === "SI").length;
   const noCumpleCount  = requirements.filter(r => r.cumple === "NO").length;
@@ -23,6 +29,23 @@ export function LawGroupCard({ tipoDocumento, documentoNumero, organismo, requir
 
   const lawLabel = documentoNumero ? `${tipoDocumento} N°${documentoNumero}` : tipoDocumento;
   const nombreLey = requirements[0]?.nombreLey;
+
+  async function saveLawName() {
+    setSavingName(true);
+    // Update all requirements under this law with the new name
+    await Promise.all(
+      requirements.map(r =>
+        fetch(`/api/requirements/${r.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nombreLey: nombreLeyEdit.trim() || null }),
+        })
+      )
+    );
+    setSavingName(false);
+    setEditingName(false);
+    router.refresh();
+  }
   const leyKey   = `${tipoDocumento}|${documentoNumero ?? ""}`;
 
   return (
@@ -33,12 +56,43 @@ export function LawGroupCard({ tipoDocumento, documentoNumero, organismo, requir
         className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors rounded-lg"
       >
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-zinc-900 dark:text-zinc-50">
-            {lawLabel}
-            {nombreLey && (
-              <span className="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400">— {nombreLey}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-zinc-900 dark:text-zinc-50">{lawLabel}</span>
+            {editingName ? (
+              <span className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                <input
+                  autoFocus
+                  value={nombreLeyEdit}
+                  onChange={e => setNombreLeyEdit(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") saveLawName(); if (e.key === "Escape") setEditingName(false); }}
+                  placeholder="Nombre de la ley o decreto…"
+                  className="rounded border border-blue-400 px-2 py-0.5 text-sm text-zinc-700 dark:border-blue-600 dark:bg-zinc-800 dark:text-zinc-100 w-80"
+                />
+                <button type="button" disabled={savingName} onClick={saveLawName}
+                  className="rounded bg-blue-600 px-2 py-0.5 text-xs text-white disabled:opacity-50">
+                  {savingName ? "…" : "Guardar"}
+                </button>
+                <button type="button" onClick={() => setEditingName(false)} className="text-xs text-zinc-400">✕</button>
+              </span>
+            ) : (
+              <>
+                {nombreLey
+                  ? <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">— {nombreLey}</span>
+                  : isAdmin && <span className="text-xs text-zinc-300 dark:text-zinc-600">sin nombre</span>
+                }
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); setEditingName(true); }}
+                    className="text-xs text-zinc-400 hover:text-blue-500"
+                    title="Editar nombre de la ley"
+                  >
+                    ✎
+                  </button>
+                )}
+              </>
             )}
-          </p>
+          </div>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
             {organismo} · {requirements.length} artículo{requirements.length !== 1 ? "s" : ""}
           </p>
