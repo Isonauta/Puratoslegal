@@ -234,6 +234,21 @@ export async function getAllDocumentos() {
   });
 }
 
+export async function getDocumentosSigStats() {
+  const now = new Date();
+  const in60days = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+
+  const [total, vigentes, vencidos, porRevisar, enFlujo] = await Promise.all([
+    prisma.documento.count(),
+    prisma.documento.count({ where: { status: "VIGENTE", proximaRevision: { gte: in60days } } }),
+    prisma.documento.count({ where: { status: "VIGENTE", proximaRevision: { lt: now } } }),
+    prisma.documento.count({ where: { status: "VIGENTE", proximaRevision: { gte: now, lt: in60days } } }),
+    prisma.documento.count({ where: { status: { in: ["BORRADOR", "EN_REVISION", "EN_APROBACION", "RECHAZADO"] } } }),
+  ]);
+
+  return { total, vigentes, vencidos, porRevisar, enFlujo };
+}
+
 export async function getCalendarEvents() {
   const [plans, permits] = await Promise.all([
     prisma.actionPlan.findMany({

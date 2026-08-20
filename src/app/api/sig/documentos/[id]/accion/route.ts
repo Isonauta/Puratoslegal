@@ -11,7 +11,6 @@ const TRANSITIONS: Record<string, { fromStatus: DocStatus[]; toStatus: DocStatus
   rechazar: { fromStatus: ["EN_APROBACION"], toStatus: "RECHAZADO", accion: "RECHAZADO" },
 };
 
-// Which field to stamp on the Documento when the actor performs this action
 const ROLE_STAMP: Record<string, { emailField: string; nombreField: string }> = {
   enviar_revision: { emailField: "elaboradorEmail", nombreField: "elaboradorNombre" },
   aprobar_revision: { emailField: "revisorEmail", nombreField: "revisorNombre" },
@@ -28,7 +27,7 @@ export async function POST(
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
-  const { accion, comentario, contenido } = await req.json();
+  const { accion, comentario, contenido, descripcionCambios, sinCambios } = await req.json();
 
   const transition = TRANSITIONS[accion];
   if (!transition) return NextResponse.json({ error: "Acción inválida" }, { status: 400 });
@@ -44,16 +43,22 @@ export async function POST(
   }
 
   const stamp = ROLE_STAMP[accion];
+  const now = new Date();
   const updateData: Record<string, unknown> = { status: transition.toStatus };
   if (contenido !== undefined) updateData.contenido = contenido;
-  if (transition.toStatus === "VIGENTE") updateData.vigenciaDesde = new Date();
-  // Auto-stamp who performed this role
+  if (transition.toStatus === "VIGENTE") {
+    updateData.vigenciaDesde = now;
+    // Next mandatory review: 1 year from approval
+    const proxima = new Date(now);
+    proxima.setFullYear(proxima.getFullYear() + 1);
+    updateData.proximaRevision = proxima;
+  }
   if (stamp) {
     updateData[stamp.emailField] = session.email;
     updateData[stamp.nombreField] = session.name ?? session.email;
   }
 
-  const [updatedDoc] = await prisma.$transaction([
+  await prisma.$transaction([
     prisma.documento.update({ where: { id }, data: updateData }),
     prisma.docRevision.create({
       data: {
@@ -62,15 +67,16 @@ export async function POST(
         autorEmail: session.email,
         autorNombre: session.name ?? session.email,
         comentario: comentario ?? null,
+        descripcionCambios: descripcionCambios ?? null,
+        sinCambios: sinCambios === true,
       },
     }),
   ]);
 
-  // Return with fresh revisiones
   const docWithRevisiones = await prisma.documento.findUnique({
     where: { id },
     include: { revisiones: { orderBy: { createdAt: "desc" }, take: 20 } },
   });
 
-  return NextResponse.json(docWithRevisiones ?? updatedDoc);
+  return NextResponse.json(docWithRevisiones);
 }

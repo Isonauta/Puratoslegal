@@ -11,13 +11,14 @@ import {
   getPermitsNeedingAttention,
   getResponsablesSummary,
   getTasksByResponsable,
+  getDocumentosSigStats,
 } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks] = await Promise.all([
+  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks, sigStats] = await Promise.all([
     getComplianceByAmbito(),
     getOverallCompliance(),
     getNonCompliantRequirements(),
@@ -26,6 +27,7 @@ export default async function DashboardPage() {
     getPermitsNeedingAttention(),
     session?.isAdmin ? getResponsablesSummary() : Promise.resolve(null),
     session?.responsable ? getTasksByResponsable(session.responsable) : Promise.resolve(null),
+    getDocumentosSigStats(),
   ]);
 
   return (
@@ -239,6 +241,62 @@ export default async function DashboardPage() {
                 {myTasks.length === 0 ? "✓" : myTasks.length}
               </span>
             </Link>
+          </section>
+        )}
+
+        {/* Manual del SIG — estado de documentos */}
+        {sigStats.total > 0 && (
+          <section>
+            <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Manual del SIG
+                  </h2>
+                  <p className="mt-1 text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+                    {sigStats.total}
+                    <span className="ml-1 text-base font-normal text-zinc-400">documentos</span>
+                  </p>
+                </div>
+                <Link href="/sig" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
+                  Ir al Manual →
+                </Link>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-4 border-t border-zinc-100 pt-4 dark:border-zinc-800 sm:grid-cols-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    <span className="text-xs font-medium text-green-700 dark:text-green-400">Al día</span>
+                  </div>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{sigStats.vigentes}</p>
+                  <p className="text-xs text-zinc-400">revisión &gt; 60 días</p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
+                    <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Por revisar</span>
+                  </div>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{sigStats.porRevisar}</p>
+                  <p className="text-xs text-zinc-400">revisión próxima en &lt; 60 días</p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+                    <span className="text-xs font-medium text-red-700 dark:text-red-400">Vencidos</span>
+                  </div>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{sigStats.vencidos}</p>
+                  <p className="text-xs text-zinc-400">revisión ya vencida</p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-2 w-2 rounded-full bg-blue-400" />
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-400">En flujo</span>
+                  </div>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{sigStats.enFlujo}</p>
+                  <p className="text-xs text-zinc-400">borrador / revisión / aprobación</p>
+                </div>
+              </div>
+            </div>
           </section>
         )}
 

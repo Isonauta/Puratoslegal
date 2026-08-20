@@ -224,9 +224,10 @@ model Documento {
   revisorNombre      String?
   aprobadorEmail     String?
   aprobadorNombre    String?
-  contenido          String?   // texto del borrador (si no hay archivo)
-  versionCode        String?   // p.ej. "v1.0"
+  contenido          String?
+  versionCode        String?
   vigenciaDesde      DateTime?
+  proximaRevision    DateTime?  // vigenciaDesde + 1 year, computed on approval
 
   revisiones         DocRevision[]
 
@@ -239,14 +240,16 @@ model Documento {
 }
 
 model DocRevision {
-  id           String    @id @default(cuid())
-  documentoId  String
-  documento    Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
-  accion       String    // "ENVIADO_REVISION" | "APROBADO_REVISION" | "DEVUELTO" | "APROBADO" | "RECHAZADO" | "PUBLICADO"
-  autorEmail   String
-  autorNombre  String
-  comentario   String?
-  createdAt    DateTime  @default(now())
+  id                  String    @id @default(cuid())
+  documentoId         String
+  documento           Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  accion              String
+  autorEmail          String
+  autorNombre         String
+  comentario          String?
+  descripcionCambios  String?   // what changed in this revision
+  sinCambios          Boolean   @default(false)
+  createdAt           DateTime  @default(now())
 
   @@index([documentoId])
 }

@@ -9,6 +9,8 @@ interface DocRevision {
   accion: string;
   autorNombre: string;
   comentario: string | null;
+  descripcionCambios: string | null;
+  sinCambios: boolean;
   createdAt: string | Date;
 }
 
@@ -30,6 +32,7 @@ interface Documento {
   contenido: string | null;
   versionCode: string | null;
   vigenciaDesde: string | Date | null;
+  proximaRevision: string | Date | null;
   publicUrl: string | null;
   linkUrl: string | null;
   revisiones: DocRevision[];
@@ -70,10 +73,28 @@ interface Props {
   isAdmin: boolean;
 }
 
+function getRevisionStatus(doc: Documento): "al_dia" | "por_revisar" | "vencido" | null {
+  if (doc.status !== "VIGENTE" || !doc.proximaRevision) return null;
+  const now = Date.now();
+  const proxima = new Date(doc.proximaRevision).getTime();
+  const diff = proxima - now;
+  if (diff < 0) return "vencido";
+  if (diff < 60 * 24 * 60 * 60 * 1000) return "por_revisar"; // < 60 days
+  return "al_dia";
+}
+
+const REVISION_STATUS_LABEL = {
+  al_dia: { label: "Al día", color: "bg-green-100 text-green-700" },
+  por_revisar: { label: "Por revisar", color: "bg-amber-100 text-amber-700" },
+  vencido: { label: "Revisión vencida", color: "bg-red-100 text-red-700" },
+};
+
 export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }: Props) {
   const [docs, setDocs] = useState<Documento[]>(initialDocs);
   const [selected, setSelected] = useState<Documento | null>(null);
   const [comentario, setComentario] = useState("");
+  const [descripcionCambios, setDescripcionCambios] = useState("");
+  const [sinCambios, setSinCambios] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [filter, setFilter] = useState<DocStatus | "TODOS">("TODOS");
@@ -90,7 +111,13 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
       const res = await fetch(`/api/sig/documentos/${selected.id}/accion`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accion, comentario: comentario || undefined, ...extraData }),
+        body: JSON.stringify({
+          accion,
+          comentario: comentario || undefined,
+          descripcionCambios: descripcionCambios || undefined,
+          sinCambios,
+          ...extraData,
+        }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -101,6 +128,8 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
       setDocs((prev) => prev.map((d) => (d.id === updated.id ? { ...d, ...updated } : d)));
       setSelected((prev) => (prev ? { ...prev, ...updated } : null));
       setComentario("");
+      setDescripcionCambios("");
+      setSinCambios(false);
     } finally {
       setLoading(false);
     }
@@ -155,7 +184,7 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
           {filtered.map((doc) => (
             <button
               key={doc.id}
-              onClick={() => { setSelected(doc); setComentario(""); }}
+              onClick={() => { setSelected(doc); setComentario(""); setDescripcionCambios(""); setSinCambios(false); }}
               className="w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-5 py-4 hover:border-[#C41230] transition-colors"
             >
               <div className="flex items-start justify-between gap-3">
@@ -173,9 +202,17 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
                     </p>
                   )}
                 </div>
-                <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_COLOR[doc.status]}`}>
-                  {STATUS_LABEL[doc.status]}
-                </span>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_COLOR[doc.status]}`}>
+                    {STATUS_LABEL[doc.status]}
+                  </span>
+                  {(() => {
+                    const rs = getRevisionStatus(doc);
+                    if (!rs) return null;
+                    const { label, color } = REVISION_STATUS_LABEL[rs];
+                    return <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${color}`}>{label}</span>;
+                  })()}
+                </div>
               </div>
             </button>
           ))}
@@ -261,22 +298,44 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
               )}
 
               {/* Vigente banner */}
-              {selected.status === "VIGENTE" && selected.vigenciaDesde && (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
-                  <div>
-                    <p className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide">Documento vigente</p>
-                    <p className="text-sm text-green-800 dark:text-green-300 font-medium mt-0.5">
-                      {selected.versionCode ?? "v1.0"} · Desde {new Date(selected.vigenciaDesde).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}
-                    </p>
-                  </div>
-                  {selected.aprobadorNombre && (
-                    <div className="ml-auto text-right">
-                      <p className="text-xs text-green-600 dark:text-green-500">Aprobado por</p>
-                      <p className="text-sm font-semibold text-green-800 dark:text-green-300">{selected.aprobadorNombre}</p>
+              {selected.status === "VIGENTE" && selected.vigenciaDesde && (() => {
+                const rs = getRevisionStatus(selected);
+                const proximaDate = selected.proximaRevision ? new Date(selected.proximaRevision) : null;
+                const bannerBorder = rs === "vencido" ? "border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800"
+                  : rs === "por_revisar" ? "border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800"
+                  : "border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800";
+                const textMain = rs === "vencido" ? "text-red-800 dark:text-red-300"
+                  : rs === "por_revisar" ? "text-amber-800 dark:text-amber-300"
+                  : "text-green-800 dark:text-green-300";
+                const textSub = rs === "vencido" ? "text-red-700 dark:text-red-400"
+                  : rs === "por_revisar" ? "text-amber-700 dark:text-amber-400"
+                  : "text-green-700 dark:text-green-400";
+                return (
+                  <div className={`border rounded-xl px-4 py-3 ${bannerBorder}`}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className={`text-xs font-semibold uppercase tracking-wide ${textSub}`}>Documento vigente</p>
+                        <p className={`text-sm font-medium mt-0.5 ${textMain}`}>
+                          {selected.versionCode ?? "v1.0"} · Aprobado el {new Date(selected.vigenciaDesde).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}
+                        </p>
+                        {selected.aprobadorNombre && (
+                          <p className={`text-xs mt-0.5 ${textSub}`}>Aprobado por: <strong>{selected.aprobadorNombre}</strong></p>
+                        )}
+                      </div>
+                      {proximaDate && (
+                        <div className="text-right">
+                          <p className={`text-xs ${textSub}`}>Próxima revisión</p>
+                          <p className={`text-sm font-bold ${textMain}`}>
+                            {proximaDate.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}
+                          </p>
+                          {rs === "vencido" && <p className="text-[10px] text-red-600 font-semibold mt-0.5">⚠ Vencida</p>}
+                          {rs === "por_revisar" && <p className="text-[10px] text-amber-600 font-semibold mt-0.5">⏰ Revisar pronto</p>}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                );
+              })()}
 
               {/* Revision history — audit trail */}
               <div>
@@ -309,6 +368,15 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
                               {" "}
                               {fecha.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
                             </p>
+                            {r.sinCambios && (
+                              <p className="mt-1 text-xs text-zinc-400 italic">Sin cambios en esta revisión.</p>
+                            )}
+                            {r.descripcionCambios && (
+                              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-800 rounded px-2 py-1">
+                                <span className="font-semibold text-zinc-500 uppercase tracking-wide text-[10px]">Cambios: </span>
+                                {r.descripcionCambios}
+                              </p>
+                            )}
                             {r.comentario && (
                               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 italic bg-zinc-50 dark:bg-zinc-800 rounded px-2 py-1">
                                 "{r.comentario}"
@@ -322,15 +390,40 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
                 )}
               </div>
 
+              {/* Changes field — shown when in revision or approval step */}
+              {(selected.status === "EN_REVISION" || selected.status === "EN_APROBACION" || selected.status === "BORRADOR" || selected.status === "RECHAZADO") && (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Descripción de cambios</label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sinCambios}
+                      onChange={(e) => { setSinCambios(e.target.checked); if (e.target.checked) setDescripcionCambios(""); }}
+                      className="rounded border-zinc-300 text-[#C41230] focus:ring-[#C41230]"
+                    />
+                    <span className="text-sm text-zinc-600 dark:text-zinc-300">Sin cambios en esta revisión</span>
+                  </label>
+                  {!sinCambios && (
+                    <textarea
+                      value={descripcionCambios}
+                      onChange={(e) => setDescripcionCambios(e.target.value)}
+                      rows={2}
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 resize-none focus:outline-none focus:ring-2 focus:ring-[#C41230]"
+                      placeholder="Ej: se actualizó sección 3.2 sobre EPP requerido, se eliminó referencia a D.S. 40..."
+                    />
+                  )}
+                </div>
+              )}
+
               {/* Comment box */}
               <div>
-                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Comentario (opcional)</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Observaciones (opcional)</label>
                 <textarea
                   value={comentario}
                   onChange={(e) => setComentario(e.target.value)}
                   rows={2}
                   className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 resize-none focus:outline-none focus:ring-2 focus:ring-[#C41230]"
-                  placeholder="Observaciones, correcciones..."
+                  placeholder="Correcciones requeridas, motivo de rechazo..."
                 />
               </div>
 
