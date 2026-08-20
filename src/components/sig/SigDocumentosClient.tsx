@@ -260,25 +260,67 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
                 </a>
               )}
 
-              {/* Revision history */}
-              {selected.revisiones.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">Historial</p>
-                  <ul className="space-y-2">
-                    {selected.revisiones.map((r) => (
-                      <li key={r.id} className="flex items-start gap-2 text-sm">
-                        <span className="shrink-0 w-2 h-2 rounded-full bg-[#C41230] mt-1.5" />
-                        <div>
-                          <span className="font-medium text-zinc-700 dark:text-zinc-300">{r.autorNombre}</span>
-                          <span className="text-zinc-400 mx-1">·</span>
-                          <span className="text-zinc-500">{r.accion.replace(/_/g, " ").toLowerCase()}</span>
-                          {r.comentario && <p className="text-zinc-500 text-xs mt-0.5 italic">{r.comentario}</p>}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+              {/* Vigente banner */}
+              {selected.status === "VIGENTE" && selected.vigenciaDesde && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide">Documento vigente</p>
+                    <p className="text-sm text-green-800 dark:text-green-300 font-medium mt-0.5">
+                      {selected.versionCode ?? "v1.0"} · Desde {new Date(selected.vigenciaDesde).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                  {selected.aprobadorNombre && (
+                    <div className="ml-auto text-right">
+                      <p className="text-xs text-green-600 dark:text-green-500">Aprobado por</p>
+                      <p className="text-sm font-semibold text-green-800 dark:text-green-300">{selected.aprobadorNombre}</p>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Revision history — audit trail */}
+              <div>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">
+                  Trazabilidad del documento
+                </p>
+                {selected.revisiones.length === 0 ? (
+                  <p className="text-xs text-zinc-400 italic">Sin acciones registradas aún.</p>
+                ) : (
+                  <ol className="relative border-l-2 border-zinc-100 dark:border-zinc-800 space-y-4 pl-5">
+                    {[...selected.revisiones].reverse().map((r) => {
+                      const accionLabel: Record<string, { label: string; color: string }> = {
+                        ENVIADO_REVISION: { label: "Enviado a revisión", color: "bg-blue-500" },
+                        APROBADO_REVISION: { label: "Revisión aprobada", color: "bg-amber-500" },
+                        DEVUELTO: { label: "Devuelto con observaciones", color: "bg-orange-500" },
+                        APROBADO: { label: "Aprobado y publicado", color: "bg-green-500" },
+                        RECHAZADO: { label: "Rechazado", color: "bg-red-500" },
+                      };
+                      const meta = accionLabel[r.accion] ?? { label: r.accion, color: "bg-zinc-400" };
+                      const fecha = new Date(r.createdAt);
+                      return (
+                        <li key={r.id} className="relative">
+                          <span className={`absolute -left-[1.4rem] top-1 w-3 h-3 rounded-full border-2 border-white dark:border-zinc-900 ${meta.color}`} />
+                          <div>
+                            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{meta.label}</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">
+                              <span className="font-medium text-zinc-600 dark:text-zinc-300">{r.autorNombre}</span>
+                              <span className="mx-1">·</span>
+                              {fecha.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}
+                              {" "}
+                              {fecha.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                            {r.comentario && (
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 italic bg-zinc-50 dark:bg-zinc-800 rounded px-2 py-1">
+                                "{r.comentario}"
+                              </p>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
+              </div>
 
               {/* Comment box */}
               <div>
@@ -343,19 +385,6 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
                       </button>
                     )}
                   </>
-                )}
-                {selected.status === "VIGENTE" && (
-                  <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Documento vigente
-                    {selected.vigenciaDesde && (
-                      <span className="text-zinc-400 font-normal">
-                        desde {new Date(selected.vigenciaDesde).toLocaleDateString("es-CL")}
-                      </span>
-                    )}
-                  </div>
                 )}
               </div>
             </div>
