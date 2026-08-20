@@ -89,6 +89,19 @@ model LegalRequirement {
 
 // One row per documento from "Evidencias Generables". Defines WHAT evidence
 // should exist; the actual uploaded/linked file lives in EvidenceFile.
+model Noticia {
+  id          String   @id @default(cuid())
+  titulo      String
+  contenido   String
+  categoria   String?
+  autorNombre String
+  autorEmail  String
+  publicado   Boolean  @default(true)
+  destacado   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model SiteConfig {
   key       String   @id
   value     String
