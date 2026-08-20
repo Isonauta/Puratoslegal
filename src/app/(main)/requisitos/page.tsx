@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAllRequirements, getLeyesDisponibles, getAllActionPlans } from "@/lib/queries";
 import type { RequirementFilters } from "@/lib/queries";
-import { RequirementRow } from "@/components/RequirementRow";
+import { LawGroupCard } from "@/components/LawGroupCard";
 import { RequirementFiltersBar } from "@/components/RequirementFiltersBar";
 import type { Ambito, CumpleEstado } from "@/generated/prisma/enums";
 
@@ -40,6 +40,19 @@ export default async function RequisitosPage({
       })
       .filter(Boolean) as string[]
   );
+
+  // Group by law
+  type LawGroup = { key: string; tipoDocumento: string; documentoNumero: string | null; organismo: string; items: typeof requirements };
+  const lawMap = new Map<string, LawGroup>();
+  for (const r of requirements) {
+    const key = `${r.tipoDocumento}|${r.documentoNumero ?? ""}`;
+    if (!lawMap.has(key)) {
+      lawMap.set(key, { key, tipoDocumento: r.tipoDocumento, documentoNumero: r.documentoNumero, organismo: r.organismo, items: [] });
+    }
+    lawMap.get(key)!.items.push(r);
+  }
+  const groups = [...lawMap.values()];
+
   const exportQuery = new URLSearchParams(
     Object.entries(filters).filter(([, v]) => v !== undefined) as [string, string][]
   ).toString();
@@ -53,11 +66,10 @@ export default async function RequisitosPage({
               ← Volver al dashboard
             </Link>
             <h1 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-              Gestión de Requisitos y Evidencia
+              Requisitos Legales
             </h1>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              {requirements.length} requisito{requirements.length === 1 ? "" : "s"} · actualiza el cumplimiento y
-              vincula evidencia.
+              {groups.length} ley{groups.length === 1 ? "" : "es"} · {requirements.length} artículo{requirements.length === 1 ? "" : "s"}
             </p>
           </div>
           <a
@@ -71,14 +83,17 @@ export default async function RequisitosPage({
       </header>
 
       <main className="mx-auto max-w-6xl space-y-3 px-3 py-6 sm:px-6 sm:py-8">
-        {requirements.length === 0 && (
+        {groups.length === 0 && (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Ningún requisito coincide con estos filtros.</p>
         )}
-        {requirements.map((r) => (
-          <RequirementRow
-            key={r.id}
-            requirement={r}
-            hasActionPlan={coveredLeyKeys.has(`${r.tipoDocumento}|${r.documentoNumero ?? ""}`)}
+        {groups.map((g) => (
+          <LawGroupCard
+            key={g.key}
+            tipoDocumento={g.tipoDocumento}
+            documentoNumero={g.documentoNumero}
+            organismo={g.organismo}
+            requirements={g.items}
+            coveredLeyKeys={coveredLeyKeys}
           />
         ))}
       </main>

@@ -101,7 +101,7 @@ function ClasificacionBadge({ clasificacion }: { clasificacion: string }) {
   return <span className={cls}>{label}</span>;
 }
 
-export function RequirementRow({ requirement, hasActionPlan = false }: { requirement: Requirement; hasActionPlan?: boolean }) {
+export function RequirementRow({ requirement, hasActionPlan = false, grouped = false }: { requirement: Requirement; hasActionPlan?: boolean; grouped?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [cumple, setCumple] = useState(requirement.cumple);
@@ -162,6 +162,127 @@ export function RequirementRow({ requirement, hasActionPlan = false }: { require
     : hasActionPlan && cumple === "NO"
     ? CUMPLE_BG.PENDIENTE
     : CUMPLE_BG[cumple] ?? CUMPLE_BG.PENDIENTE;
+
+  if (grouped) {
+    return (
+      <div className={`transition-colors ${fueraAlcance ? "opacity-60" : ""}`}>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex w-full flex-col gap-2 px-5 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 sm:flex-row sm:items-center sm:gap-4"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              {requirement.articulo && (
+                <span className="shrink-0 text-sm font-semibold text-blue-700 dark:text-blue-400">
+                  Art. {requirement.articulo}
+                </span>
+              )}
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                cumple === "SI"       ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                : cumple === "NO"     ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
+                : cumple === "NO_APLICA" ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+              }`}>
+                {CUMPLE_LABEL[cumple]}
+              </span>
+              <span className="min-w-0 truncate text-sm text-zinc-700 dark:text-zinc-200">
+                {requirement.requisitoTexto ?? requirement.titulo}
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-zinc-400">
+              Responsable: {requirement.responsable ?? "Sin asignar"}
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <select
+              value={responsable}
+              disabled={saving}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => updateResponsable(e.target.value)}
+              className="max-w-[120px] rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+            >
+              <option value="">Sin asignar</option>
+              {RESPONSABLES.map((r) => (
+                <option key={r} value={r}>{r.split(" ")[0]}</option>
+              ))}
+            </select>
+            <select
+              value={cumple}
+              disabled={saving}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => updateCumple(e.target.value)}
+              className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+            >
+              {CUMPLE_OPTIONS.map((o) => (
+                <option key={o} value={o}>{CUMPLE_LABEL[o]}</option>
+              ))}
+            </select>
+            <EvidenceBadge links={requirement.evidenceLinks} cumple={cumple} />
+            <span className="text-zinc-400">{open ? "▲" : "▼"}</span>
+          </div>
+        </button>
+        {open && (
+          <div className="border-t border-zinc-100 bg-zinc-50 px-5 py-3 dark:border-zinc-800 dark:bg-zinc-800/30">
+            <p className="mb-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              N°{requirement.numero} · {requirement.ambito} — {requirement.titulo}
+            </p>
+            <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={toggleFueraAlcance}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  fueraAlcance
+                    ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                    : "border-zinc-300 bg-white text-zinc-600 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                }`}
+              >
+                {fueraAlcance ? "↩ Incluir en alcance SIG" : "Marcar fuera de alcance SIG"}
+              </button>
+            </div>
+            {cumple === "NO_APLICA" && (
+              <div className="mb-3 rounded border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-800">
+                <p className="mb-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">Justificación de No aplica</p>
+                <textarea
+                  rows={3}
+                  placeholder="Ej: La empresa no cuenta con trabajadores en régimen de teletrabajo…"
+                  value={justificacion}
+                  onChange={(e) => setJustificacion(e.target.value)}
+                  className="w-full rounded border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                />
+                <div className="mt-2 flex items-center gap-3">
+                  <button type="button" disabled={savingJustificacion || !justificacion.trim()} onClick={saveJustificacion}
+                    className="rounded bg-zinc-700 px-2 py-1 text-xs text-white hover:bg-zinc-600 disabled:opacity-50 dark:bg-zinc-600">
+                    {savingJustificacion ? "Guardando…" : "Guardar justificación"}
+                  </button>
+                </div>
+              </div>
+            )}
+            {cumple !== "NO_APLICA" && (
+              <div className="mb-3">
+                <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">Nota de evidencia</p>
+                <textarea
+                  rows={2}
+                  placeholder="Describe qué evidencia existe o qué se hará…"
+                  value={formaCumplimiento}
+                  onChange={(e) => setFormaCumplimiento(e.target.value)}
+                  onBlur={saveFormaCumplimiento}
+                  className="w-full rounded border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-700 placeholder-zinc-400 focus:border-blue-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                />
+                {savingForma && <p className="mt-0.5 text-xs text-zinc-400">Guardando…</p>}
+              </div>
+            )}
+            <div className="space-y-3">
+              {requirement.evidenceLinks.map((link) => (
+                <EvidenceTemplateBlock key={link.evidenceTemplate.id} template={link.evidenceTemplate} onChange={() => router.refresh()} />
+              ))}
+            </div>
+            <NewEvidenceForm legalRequirementId={requirement.id} onChange={() => router.refresh()} />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-lg border shadow-sm transition-colors ${cardBg}`}>
