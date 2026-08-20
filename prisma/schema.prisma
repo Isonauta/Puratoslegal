@@ -190,29 +190,65 @@ model ActionPlan {
 // subidos y descargados directamente (archivo real en Supabase Storage),
 // clasificados por punto normativo (4.1, 4.2, ...) para tenerlos listos
 // ante una auditoría externa de ISO 14001 / 45001.
+enum DocStatus {
+  BORRADOR
+  EN_REVISION
+  EN_APROBACION
+  VIGENTE
+  RECHAZADO
+}
+
 model Documento {
-  id              String   @id @default(cuid())
-  clausula        String // p.ej. "4.1"
-  clausulaNombre  String // p.ej. "Comprensión de la organización y su contexto"
+  id              String    @id @default(cuid())
+  clausula        String
+  clausulaNombre  String
   norma           DocNorma
-  tipo            String // Procedimiento, Matriz, Registro, Otro
+  tipo            String
   nombre          String
   descripcion     String?
-  storagePath     String? // ruta dentro del bucket "documentos" de Supabase Storage
-  publicUrl       String? // URL pública de Supabase Storage (solo para archivos subidos)
+  storagePath     String?
+  publicUrl       String?
   fileName        String?
   mimeType        String?
   sizeBytes       Int?
-  linkUrl         String?          // URL externa (SharePoint / Google Drive)
-  linkProvider    StorageProvider? // proveedor del enlace externo
+  linkUrl         String?
+  linkProvider    StorageProvider?
   subidoPorEmail  String?
   subidoPorNombre String?
+
+  // Workflow documental
+  status             DocStatus @default(BORRADOR)
+  elaboradorEmail    String?
+  elaboradorNombre   String?
+  revisorEmail       String?
+  revisorNombre      String?
+  aprobadorEmail     String?
+  aprobadorNombre    String?
+  contenido          String?   // texto del borrador (si no hay archivo)
+  versionCode        String?   // p.ej. "v1.0"
+  vigenciaDesde      DateTime?
+
+  revisiones         DocRevision[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([clausula])
   @@index([norma])
+  @@index([status])
+}
+
+model DocRevision {
+  id           String    @id @default(cuid())
+  documentoId  String
+  documento    Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  accion       String    // "ENVIADO_REVISION" | "APROBADO_REVISION" | "DEVUELTO" | "APROBADO" | "RECHAZADO" | "PUBLICADO"
+  autorEmail   String
+  autorNombre  String
+  comentario   String?
+  createdAt    DateTime  @default(now())
+
+  @@index([documentoId])
 }
 
 // =============================================================================

@@ -37,7 +37,7 @@ export default function DashboardHero({ name, overallPct }: DashboardHeroProps) 
             Ver requisitos
           </Link>
           <Link
-            href="/documentos"
+            href="/sig"
             className="inline-flex items-center gap-1.5 bg-white/10 border border-white/30 text-white font-medium text-sm px-4 py-2.5 rounded-xl hover:bg-white/20 transition-colors"
           >
             Manual del SIG
