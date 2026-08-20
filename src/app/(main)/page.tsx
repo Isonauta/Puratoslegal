@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ComplianceCard } from "@/components/ComplianceCard";
+import DashboardHero from "@/components/DashboardHero";
 import { getSession } from "@/lib/auth";
 import {
   getComplianceByAmbito,
@@ -39,31 +40,10 @@ export default async function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-6xl space-y-8 px-3 py-6 sm:px-6 sm:py-8">
-        <section>
-          <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="min-w-[120px]">
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">Cumplimiento global</p>
-                <p className="mt-1 text-4xl font-bold text-zinc-900 dark:text-zinc-50">{overall.porcentaje}%</p>
-              </div>
-              <dl className="flex flex-wrap gap-x-6 gap-y-3 text-sm sm:ml-auto">
-                <div className="text-center">
-                  <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{overall.total}</dd>
-                  <dt className="text-zinc-500 dark:text-zinc-400">Requisitos</dt>
-                </div>
-                <div className="text-center">
-                  <dd className="text-lg font-semibold text-red-600 dark:text-red-400">{overall.noCumple}</dd>
-                  <dt className="text-zinc-500 dark:text-zinc-400">Incumplidos</dt>
-                </div>
-                <div className="text-center">
-                  <dd className="text-lg font-semibold text-amber-600 dark:text-amber-400">{overall.pendiente}</dd>
-                  <dt className="text-zinc-500 dark:text-zinc-400">Sin evaluar</dt>
-                  <dt className="text-xs text-zinc-400 dark:text-zinc-500">todos los responsables</dt>
-                </div>
-              </dl>
-            </div>
-          </div>
-        </section>
+        <DashboardHero
+          name={session?.name ?? session?.email ?? ""}
+          overallPct={overall.porcentaje}
+        />
 
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
