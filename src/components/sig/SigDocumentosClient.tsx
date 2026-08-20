@@ -98,8 +98,25 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
   const [loading, setLoading] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [filter, setFilter] = useState<DocStatus | "TODOS">("TODOS");
+  const [q, setQ] = useState("");
+  const [filterTipo, setFilterTipo] = useState("");
 
-  const filtered = filter === "TODOS" ? docs : docs.filter((d) => d.status === filter);
+  const tipos = [...new Set(docs.map(d => d.tipo))].sort();
+
+  const filtered = docs.filter(d => {
+    if (filter !== "TODOS" && d.status !== filter) return false;
+    if (filterTipo && d.tipo !== filterTipo) return false;
+    if (q) {
+      const lower = q.toLowerCase();
+      if (
+        !d.nombre.toLowerCase().includes(lower) &&
+        !d.clausula.toLowerCase().includes(lower) &&
+        !(d.clausulaNombre ?? "").toLowerCase().includes(lower) &&
+        !(d.descripcion ?? "").toLowerCase().includes(lower)
+      ) return false;
+    }
+    return true;
+  });
 
   const counts: Record<string, number> = { TODOS: docs.length };
   for (const d of docs) counts[d.status] = (counts[d.status] ?? 0) + 1;
@@ -149,6 +166,30 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
 
   return (
     <div className="space-y-6">
+      {/* Buscador */}
+      <div className="flex flex-wrap gap-2">
+        <input
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          placeholder="Buscar por nombre, cláusula…"
+          className="flex-1 min-w-[200px] rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+        />
+        <select
+          value={filterTipo}
+          onChange={e => setFilterTipo(e.target.value)}
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+        >
+          <option value="">Todos los tipos</option>
+          {tipos.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        {(q || filterTipo) && (
+          <button onClick={() => { setQ(""); setFilterTipo(""); }}
+            className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
+            Limpiar
+          </button>
+        )}
+      </div>
+
       {/* Header actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
@@ -178,7 +219,9 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
 
       {/* Document list */}
       {filtered.length === 0 ? (
-        <p className="text-sm text-zinc-400 py-8 text-center">No hay documentos en este estado.</p>
+        <p className="text-sm text-zinc-400 py-8 text-center">
+          {q || filterTipo ? "Sin resultados para esta búsqueda." : "No hay documentos en este estado."}
+        </p>
       ) : (
         <div className="space-y-2">
           {filtered.map((doc) => (
