@@ -100,6 +100,25 @@ export default function NoticiasTab({ noticias, isAdmin, onReload }: { noticias:
           ))}
         </div>
       )}
+      {/* Link externo Puratos Chile */}
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <a
+          href="https://www.puratos.cl/es/news?type=news&root=/content/chile/es/news&limit=8.0&"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm hover:shadow-md hover:border-gray-300 transition-all group"
+        >
+          <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shrink-0">
+            <span className="text-white font-bold text-sm">P</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900">Noticias Puratos Chile</p>
+            <p className="text-xs text-gray-500 truncate">puratos.cl — noticias corporativas</p>
+          </div>
+          <span className="text-gray-400 group-hover:text-gray-600 text-sm">↗</span>
+        </a>
+      </div>
+
       {showModal && <NuevaNoticiaModal onClose={() => setShowModal(false)} onSaved={onReload} />}
     </div>
   );
