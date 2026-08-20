@@ -22,6 +22,7 @@ export function LawGroupCard({ tipoDocumento, documentoNumero, organismo, requir
   const noAplicaCount  = requirements.filter(r => r.cumple === "NO_APLICA").length;
 
   const lawLabel = documentoNumero ? `${tipoDocumento} N°${documentoNumero}` : tipoDocumento;
+  const nombreLey = requirements[0]?.nombreLey;
   const leyKey   = `${tipoDocumento}|${documentoNumero ?? ""}`;
 
   return (
@@ -32,7 +33,12 @@ export function LawGroupCard({ tipoDocumento, documentoNumero, organismo, requir
         className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors rounded-lg"
       >
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-zinc-900 dark:text-zinc-50">{lawLabel}</p>
+          <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+            {lawLabel}
+            {nombreLey && (
+              <span className="ml-2 text-sm font-normal text-zinc-500 dark:text-zinc-400">— {nombreLey}</span>
+            )}
+          </p>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
             {organismo} · {requirements.length} artículo{requirements.length !== 1 ? "s" : ""}
           </p>

@@ -3,6 +3,8 @@ import { getAllRequirements, getLeyesDisponibles, getAllActionPlans } from "@/li
 import type { RequirementFilters } from "@/lib/queries";
 import { LawGroupCard } from "@/components/LawGroupCard";
 import { RequirementFiltersBar } from "@/components/RequirementFiltersBar";
+import { NewRequirementModal } from "@/components/NewRequirementModal";
+import { getSession } from "@/lib/auth";
 import type { Ambito, CumpleEstado } from "@/generated/prisma/enums";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +27,7 @@ export default async function RequisitosPage({
     q: params.q || undefined,
   };
 
+  const session = await getSession();
   const [requirements, leyes, allPlans] = await Promise.all([
     getAllRequirements(filters),
     getLeyesDisponibles(),
@@ -72,12 +75,15 @@ export default async function RequisitosPage({
               {groups.length} ley{groups.length === 1 ? "" : "es"} · {requirements.length} artículo{requirements.length === 1 ? "" : "s"}
             </p>
           </div>
-          <a
-            href={`/api/export/requisitos${exportQuery ? `?${exportQuery}` : ""}`}
-            className="shrink-0 rounded border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-          >
-            Exportar
-          </a>
+          <div className="flex items-center gap-2">
+            {session?.isAdmin && <NewRequirementModal />}
+            <a
+              href={`/api/export/requisitos${exportQuery ? `?${exportQuery}` : ""}`}
+              className="shrink-0 rounded border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              Exportar
+            </a>
+          </div>
         </div>
         <RequirementFiltersBar filters={filters} leyes={leyes} />
       </header>

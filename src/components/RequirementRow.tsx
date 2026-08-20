@@ -25,6 +25,7 @@ type Requirement = {
   ambito: string;
   tipoDocumento: string;
   documentoNumero: string | null;
+  nombreLey: string | null;
   organismo: string;
   articulo: string | null;
   requisitoTexto: string | null;

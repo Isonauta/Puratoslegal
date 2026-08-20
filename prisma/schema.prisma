@@ -57,6 +57,7 @@ model LegalRequirement {
   tipoRequisito      String // Legal / Otro Requisito / ISO
   tipoDocumento      String // Decreto Supremo, Ley, Resolución, etc.
   documentoNumero    String? // "N°" of the law/decree itself (e.g. 148, 20949)
+  nombreLey          String? // Full name/title of the law or decree
   titulo             String
   anioPublicacion    Int?
   organismo          String
