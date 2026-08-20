@@ -89,6 +89,12 @@ model LegalRequirement {
 
 // One row per documento from "Evidencias Generables". Defines WHAT evidence
 // should exist; the actual uploaded/linked file lives in EvidenceFile.
+model SiteConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 model EvidenceTemplate {
   id             String  @id @default(cuid())
   codigoSugerido String  @unique // e.g. "R-SST-Contrat-01"

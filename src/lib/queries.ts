@@ -249,6 +249,17 @@ export async function getDocumentosSigStats() {
   return { total, vigentes, vencidos, porRevisar, enFlujo };
 }
 
+export async function getDiasSinAccidentes(): Promise<{ dias: number; desde: string } | null> {
+  const config = await prisma.siteConfig.findUnique({ where: { key: "lastAccidentDate" } });
+  if (!config) return null;
+  const desde = new Date(config.value);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  desde.setHours(0, 0, 0, 0);
+  const dias = Math.floor((hoy.getTime() - desde.getTime()) / (1000 * 60 * 60 * 24));
+  return { dias, desde: config.value };
+}
+
 export async function getCalendarEvents() {
   const [plans, permits] = await Promise.all([
     prisma.actionPlan.findMany({

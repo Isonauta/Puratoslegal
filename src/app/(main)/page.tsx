@@ -12,13 +12,15 @@ import {
   getResponsablesSummary,
   getTasksByResponsable,
   getDocumentosSigStats,
+  getDiasSinAccidentes,
 } from "@/lib/queries";
+import { AccidentBanner } from "@/components/AccidentBanner";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks, sigStats] = await Promise.all([
+  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks, sigStats, accidentes] = await Promise.all([
     getComplianceByAmbito(),
     getOverallCompliance(),
     getNonCompliantRequirements(),
@@ -28,6 +30,7 @@ export default async function DashboardPage() {
     session?.isAdmin ? getResponsablesSummary() : Promise.resolve(null),
     session?.responsable ? getTasksByResponsable(session.responsable) : Promise.resolve(null),
     getDocumentosSigStats(),
+    getDiasSinAccidentes(),
   ]);
 
   return (
@@ -37,6 +40,14 @@ export default async function DashboardPage() {
           name={session?.name ?? session?.email ?? ""}
           overallPct={overall.porcentaje}
         />
+
+        {accidentes && (
+          <AccidentBanner
+            dias={accidentes.dias}
+            desde={accidentes.desde}
+            isAdmin={session?.isAdmin ?? false}
+          />
+        )}
 
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
