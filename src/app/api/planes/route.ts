@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session?.isAdmin) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
-  const { id, estado, avance, comentario } = await req.json();
+  const { id, estado, avance, comentario, asignadoA } = await req.json();
   if (!id) return NextResponse.json({ error: "Falta id" }, { status: 400 });
 
   const updated = await prisma.planActividad.update({
@@ -24,6 +24,7 @@ export async function PATCH(req: NextRequest) {
       ...(estado !== undefined && { estado }),
       ...(avance !== undefined && { avance }),
       ...(comentario !== undefined && { comentario }),
+      ...(asignadoA !== undefined && { asignadoA }),
     },
   });
   return NextResponse.json(updated);

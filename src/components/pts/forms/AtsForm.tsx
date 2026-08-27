@@ -15,7 +15,20 @@ import CheckboxGroup from "@/components/pts/ui/CheckboxGroup";
 import Button from "@/components/pts/ui/Button";
 import SignaturePad from "@/components/pts/signature/SignaturePad";
 
-export default function AtsForm({ permitId }: { permitId?: string }) {
+type PermitData = {
+  companyName: string;
+  area: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  taskDescription: string;
+  permitTypes: string[];
+  controlMeasures: string[];
+  ppeRequired: string[];
+  workers: { fullName: string; rut: string }[];
+};
+
+export default function AtsForm({ permitId, permitData }: { permitId?: string; permitData?: PermitData }) {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -24,12 +37,20 @@ export default function AtsForm({ permitId }: { permitId?: string }) {
     resolver: zodResolver(atsSchema),
     defaultValues: {
       workPermitId: permitId || null,
-      highRiskProcedures: [],
+      companyName: permitData?.companyName ?? "",
+      area: permitData?.area ?? "",
+      date: permitData?.date ?? "",
+      startTime: permitData?.startTime ?? "",
+      endTime: permitData?.endTime ?? "",
+      taskDescription: permitData?.taskDescription ?? "",
+      highRiskProcedures: (permitData?.permitTypes ?? []) as AtsInput["highRiskProcedures"],
       potentialIncidents: [],
-      controlMeasures: [],
-      ppeRequired: [],
+      controlMeasures: (permitData?.controlMeasures ?? []) as AtsInput["controlMeasures"],
+      ppeRequired: (permitData?.ppeRequired ?? []) as AtsInput["ppeRequired"],
       steps: [{ taskStage: "", hazardsExposed: "", potentialIncidents: "", controls: "" }],
-      workers: [{ fullName: "", rut: "" }],
+      workers: permitData?.workers?.length
+        ? permitData.workers.map((w) => ({ fullName: w.fullName, rut: w.rut }))
+        : [{ fullName: "", rut: "" }],
     },
   });
 
