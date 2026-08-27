@@ -136,15 +136,21 @@ function EditModal({ actividad, onClose, onSaved }: { actividad: Actividad; onCl
   const [estado, setEstado] = useState(actividad.estado);
   const [avance, setAvance] = useState(Math.round(actividad.avance * 100));
   const [comentario, setComentario] = useState(actividad.comentario ?? "");
-  const [asignadoA, setAsignadoA] = useState(actividad.asignadoA ?? "");
   const [saving, setSaving] = useState(false);
+
+  // Split stored "Cargo — Nombre" into two fields
+  const stored = actividad.asignadoA ?? "";
+  const sepIdx = stored.indexOf(" — ");
+  const [cargo, setCargo] = useState(sepIdx >= 0 ? stored.slice(0, sepIdx) : "");
+  const [nombre, setNombre] = useState(sepIdx >= 0 ? stored.slice(sepIdx + 3) : stored);
 
   async function handleSave() {
     setSaving(true);
+    const asignadoA = nombre.trim() ? `${cargo.trim()}${cargo.trim() ? " — " : ""}${nombre.trim()}` : null;
     const res = await fetch("/api/planes", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: actividad.id, estado, avance: avance / 100, comentario: comentario || null, asignadoA: asignadoA || null }),
+      body: JSON.stringify({ id: actividad.id, estado, avance: avance / 100, comentario: comentario || null, asignadoA }),
     });
     setSaving(false);
     if (res.ok) { onSaved(await res.json()); onClose(); }
@@ -158,14 +164,25 @@ function EditModal({ actividad, onClose, onSaved }: { actividad: Actividad; onCl
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl shrink-0">×</button>
         </div>
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Asignado a</label>
-            <input
-              value={asignadoA}
-              onChange={e => setAsignadoA(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              placeholder="Nombre de la persona responsable…"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+              <input
+                value={cargo}
+                onChange={e => setCargo(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="Ej: Jefe de Bodega"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+              <input
+                value={nombre}
+                onChange={e => setNombre(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="Nombre completo"
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
