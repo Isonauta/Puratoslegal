@@ -62,7 +62,7 @@ const MA = [
   { codigoExterno: "P-026", clausula: "6.2", eje: "Planificación 2028", actividad: "Definir programa ambiental 2028", responsable: "EHS / Gerencia", inicio: "2027-11-01", fin: "2027-12-31", frecuencia: "Anual", evidencia: "Programa aprobado", kpi: "Programa elaborado", meta: "Sí", prioridad: "Media", estado: "No iniciado", avance: 0 },
 ];
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
   if (!TOKEN || token !== TOKEN) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
