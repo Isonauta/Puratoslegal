@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import type { UserRole } from "@/generated/prisma/client";
 import PtsNavBar from "@/components/pts/NavBar";
 import PermitActions from "@/components/pts/PermitActions";
+import PrintButton from "@/components/pts/PrintButton";
 import {
   PERMIT_STATUS_LABELS,
   PERMIT_STATUS_COLORS,
@@ -43,10 +44,18 @@ export default async function PermitDetailPage({ params }: { params: Promise<{ i
 
   return (
     <>
-      <PtsNavBar userName={session.name ?? undefined} userRole={role} />
+      <style>{`
+        @media print {
+          .pts-navbar, .pts-actions, .print-hide { display: none !important; }
+          body { background: white; }
+          main { max-width: 100% !important; padding: 1rem !important; }
+          .bg-white { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+        }
+      `}</style>
+      <div className="pts-navbar"><PtsNavBar userName={session.name ?? undefined} userRole={role} /></div>
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center gap-3">
-          <Link href="/pts" className="text-sm text-gray-500 hover:text-gray-700">← Volver</Link>
+          <Link href="/pts" className="text-sm text-gray-500 hover:text-gray-700 print-hide">← Volver</Link>
           <span
             className={`text-xs font-medium px-2.5 py-1 rounded-full ${
               PERMIT_STATUS_COLORS[permit.status] ?? "bg-gray-100 text-gray-700"
@@ -199,17 +208,20 @@ export default async function PermitDetailPage({ params }: { params: Promise<{ i
           </Section>
         )}
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 print-hide">
           <Link
             href={`/pts/ats/new?permitId=${permit.id}`}
             className="text-sm text-[#C41230] hover:underline"
           >
             + Crear ATS para este permiso
           </Link>
+          <PrintButton />
         </div>
 
         {session.id && (
-          <PermitActions permitId={permit.id} status={permit.status} role={role} />
+          <div className="pts-actions">
+            <PermitActions permitId={permit.id} status={permit.status} role={role} />
+          </div>
         )}
       </main>
     </>
