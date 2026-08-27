@@ -11,7 +11,7 @@ export default function ChatPage() {
               ← Volver al dashboard
             </Link>
             <h1 className="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-              Consulta Legal
+              Conversa con Purasafe
             </h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Asistente especializado en la legislación aplicable a Puratos Chile
