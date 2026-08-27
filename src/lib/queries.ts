@@ -249,15 +249,44 @@ export async function getDocumentosSigStats() {
   return { total, vigentes, vencidos, porRevisar, enFlujo };
 }
 
-export async function getDiasSinAccidentes(): Promise<{ dias: number; desde: string } | null> {
-  const config = await prisma.siteConfig.findUnique({ where: { key: "lastAccidentDate" } });
-  if (!config) return null;
-  const desde = new Date(config.value);
+export const AREAS_ACCIDENTE = [
+  "Chocolate", "WET", "UHT", "Laboratorio Calidad",
+  "Laboratorio Desarrollo", "Bodega CD", "Administración", "AXTEL", "PTAR",
+] as const;
+
+export type AreaAccidente = typeof AREAS_ACCIDENTE[number];
+
+function diasDesde(valor: string): number {
+  const desde = new Date(valor);
   const hoy = new Date();
   hoy.setHours(0, 0, 0, 0);
   desde.setHours(0, 0, 0, 0);
-  const dias = Math.floor((hoy.getTime() - desde.getTime()) / (1000 * 60 * 60 * 24));
-  return { dias, desde: config.value };
+  return Math.floor((hoy.getTime() - desde.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+export async function getDiasSinAccidentes(): Promise<{
+  dias: number;
+  desde: string;
+  areas: { area: string; dias: number; desde: string }[];
+} | null> {
+  const hoy = new Date().toISOString().slice(0, 10);
+
+  // Carga el registro global + todos los registros por área
+  const claves = ["lastAccidentDate", ...AREAS_ACCIDENTE.map(a => `lastAccidentDate_${a}`)];
+  const configs = await prisma.siteConfig.findMany({ where: { key: { in: claves } } });
+
+  const byKey = Object.fromEntries(configs.map(c => [c.key, c.value]));
+
+  // Fallback: si no hay registro global, usar hoy
+  const globalVal = byKey["lastAccidentDate"] ?? hoy;
+  const dias = diasDesde(globalVal);
+
+  const areas = AREAS_ACCIDENTE.map(area => {
+    const val = byKey[`lastAccidentDate_${area}`] ?? hoy;
+    return { area, dias: diasDesde(val), desde: val };
+  });
+
+  return { dias, desde: globalVal, areas };
 }
 
 export async function getCalendarEvents() {

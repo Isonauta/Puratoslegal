@@ -45,6 +45,7 @@ export default async function DashboardPage() {
           <AccidentBanner
             dias={accidentes.dias}
             desde={accidentes.desde}
+            areas={accidentes.areas}
             isAdmin={session?.isAdmin ?? false}
           />
         )}
