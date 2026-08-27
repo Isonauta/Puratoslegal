@@ -1,0 +1,23 @@
+CREATE TABLE "PlanActividad" (
+  "id"            TEXT NOT NULL,
+  "programa"      TEXT NOT NULL,
+  "codigoExterno" TEXT,
+  "eje"           TEXT NOT NULL,
+  "clausula"      TEXT,
+  "actividad"     TEXT NOT NULL,
+  "descripcion"   TEXT,
+  "responsable"   TEXT,
+  "inicio"        TIMESTAMP(3),
+  "fin"           TIMESTAMP(3),
+  "frecuencia"    TEXT,
+  "evidencia"     TEXT,
+  "kpi"           TEXT,
+  "meta"          TEXT,
+  "prioridad"     TEXT NOT NULL DEFAULT 'Media',
+  "estado"        TEXT NOT NULL DEFAULT 'No iniciado',
+  "avance"        DOUBLE PRECISION NOT NULL DEFAULT 0,
+  "comentario"    TEXT,
+  "createdAt"     TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt"     TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "PlanActividad_pkey" PRIMARY KEY ("id")
+);

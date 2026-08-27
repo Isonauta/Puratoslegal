@@ -658,3 +658,26 @@ model Politica {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model PlanActividad {
+  id            String   @id @default(cuid())
+  programa      String   // "SST" | "MA"
+  codigoExterno String?  // P-001, 1, 2…
+  eje           String   // Eje (SST) o Linea/proceso (MA)
+  clausula      String?  // Clausula ISO (MA) o null
+  actividad     String
+  descripcion   String?
+  responsable   String?
+  inicio        DateTime?
+  fin           DateTime?
+  frecuencia    String?
+  evidencia     String?
+  kpi           String?
+  meta          String?
+  prioridad     String   @default("Media") // Alta | Media | Baja
+  estado        String   @default("No iniciado") // No iniciado | En curso | Completado | Atrasado
+  avance        Float    @default(0)  // 0.0 - 1.0
+  comentario    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
