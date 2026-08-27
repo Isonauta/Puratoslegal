@@ -136,6 +136,9 @@ function EditModal({ actividad, onClose, onSaved }: { actividad: Actividad; onCl
   const [estado, setEstado] = useState(actividad.estado);
   const [avance, setAvance] = useState(Math.round(actividad.avance * 100));
   const [comentario, setComentario] = useState(actividad.comentario ?? "");
+  const [inicio, setInicio] = useState(actividad.inicio ? actividad.inicio.slice(0, 10) : "");
+  const [fin, setFin] = useState(actividad.fin ? actividad.fin.slice(0, 10) : "");
+  const [prioridad, setPrioridad] = useState(actividad.prioridad ?? "Media");
   const [saving, setSaving] = useState(false);
 
   // Split stored "Cargo — Nombre" into two fields
@@ -150,7 +153,11 @@ function EditModal({ actividad, onClose, onSaved }: { actividad: Actividad; onCl
     const res = await fetch("/api/planes", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: actividad.id, estado, avance: avance / 100, comentario: comentario || null, asignadoA }),
+      body: JSON.stringify({
+        id: actividad.id, estado, avance: avance / 100,
+        comentario: comentario || null, asignadoA,
+        inicio: inicio || null, fin: fin || null, prioridad,
+      }),
     });
     setSaving(false);
     if (res.ok) { onSaved(await res.json()); onClose(); }
@@ -184,11 +191,29 @@ function EditModal({ actividad, onClose, onSaved }: { actividad: Actividad; onCl
               />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-            <select value={estado} onChange={e => setEstado(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
-              {ESTADOS.map(e => <option key={e}>{e}</option>)}
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha inicio</label>
+              <input type="date" value={inicio} onChange={e => setInicio(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha término</label>
+              <input type="date" value={fin} onChange={e => setFin(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <select value={estado} onChange={e => setEstado(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+                {ESTADOS.map(e => <option key={e}>{e}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+              <select value={prioridad} onChange={e => setPrioridad(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+                {["Alta","Media","Baja"].map(p => <option key={p}>{p}</option>)}
+              </select>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">% Avance: <span className="font-bold">{avance}%</span></label>
@@ -196,7 +221,7 @@ function EditModal({ actividad, onClose, onSaved }: { actividad: Actividad; onCl
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Comentario / Riesgo</label>
-            <textarea value={comentario} onChange={e => setComentario(e.target.value)} rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none" placeholder="Observaciones, riesgos o bloqueos…" />
+            <textarea value={comentario} onChange={e => setComentario(e.target.value)} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none" placeholder="Observaciones, riesgos o bloqueos…" />
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-5">
