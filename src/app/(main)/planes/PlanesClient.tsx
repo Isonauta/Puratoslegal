@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 type Actividad = {
   id: string;
   programa: string;
+  area: string;
+  asignadoA: string | null;
   codigoExterno: string | null;
   eje: string;
   clausula: string | null;
@@ -26,6 +28,14 @@ const ESTADOS = ["No iniciado", "En curso", "Completado", "Atrasado"] as const;
 const PROGRAMAS = [
   { key: "SST", label: "SST ISO 45001", color: "bg-red-600", light: "bg-red-50 text-red-700 border-red-200" },
   { key: "MA", label: "Medio Ambiente ISO 14001", color: "bg-green-600", light: "bg-green-50 text-green-700 border-green-200" },
+] as const;
+
+const AREAS = [
+  { key: "General", label: "General", icon: "📋" },
+  { key: "Bodega", label: "Bodega", icon: "📦" },
+  { key: "Calidad", label: "Calidad", icon: "🔬" },
+  { key: "Mantenimiento", label: "Mantenimiento", icon: "🔧" },
+  { key: "Producción", label: "Producción", icon: "🏭" },
 ] as const;
 
 function estadoColor(estado: string) {
@@ -71,7 +81,6 @@ function DashboardPrograma({ actividades, programa }: { actividades: Actividad[]
         <span className="text-xs text-gray-400 ml-auto">{total} actividades</span>
       </div>
 
-      {/* Avance global */}
       <div className="mb-4">
         <div className="flex justify-between text-xs text-gray-500 mb-1">
           <span>Avance global</span>
@@ -82,7 +91,6 @@ function DashboardPrograma({ actividades, programa }: { actividades: Actividad[]
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-4 gap-2">
         {[
           { label: "Completados", value: completados, cls: "text-emerald-600" },
@@ -97,7 +105,6 @@ function DashboardPrograma({ actividades, programa }: { actividades: Actividad[]
         ))}
       </div>
 
-      {/* Toggle por eje */}
       <button
         onClick={() => setExpandido(v => !v)}
         className="mt-4 w-full flex items-center justify-between text-xs text-gray-400 hover:text-gray-600 border-t border-gray-100 pt-3 transition-colors"
@@ -129,6 +136,7 @@ function EditModal({ actividad, onClose, onSaved }: { actividad: Actividad; onCl
   const [estado, setEstado] = useState(actividad.estado);
   const [avance, setAvance] = useState(Math.round(actividad.avance * 100));
   const [comentario, setComentario] = useState(actividad.comentario ?? "");
+  const [asignadoA, setAsignadoA] = useState(actividad.asignadoA ?? "");
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
@@ -136,7 +144,7 @@ function EditModal({ actividad, onClose, onSaved }: { actividad: Actividad; onCl
     const res = await fetch("/api/planes", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: actividad.id, estado, avance: avance / 100, comentario: comentario || null }),
+      body: JSON.stringify({ id: actividad.id, estado, avance: avance / 100, comentario: comentario || null, asignadoA: asignadoA || null }),
     });
     setSaving(false);
     if (res.ok) { onSaved(await res.json()); onClose(); }
@@ -150,6 +158,15 @@ function EditModal({ actividad, onClose, onSaved }: { actividad: Actividad; onCl
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl shrink-0">×</button>
         </div>
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Asignado a</label>
+            <input
+              value={asignadoA}
+              onChange={e => setAsignadoA(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              placeholder="Nombre de la persona responsable…"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
             <select value={estado} onChange={e => setEstado(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -184,7 +201,13 @@ function ActividadRow({ a, isAdmin, onEdit }: { a: Actividad; isAdmin: boolean; 
       <td className="py-3 px-3 text-xs text-gray-500 whitespace-nowrap">{a.eje}</td>
       <td className="py-3 px-3">
         <div className="text-sm text-gray-900 font-medium leading-snug">{a.actividad}</div>
-        {a.responsable && <div className="text-xs text-gray-400 mt-0.5">{a.responsable}</div>}
+        <div className="text-xs text-gray-400 mt-0.5">
+          {a.asignadoA ? (
+            <span className="font-medium text-indigo-600">{a.asignadoA}</span>
+          ) : a.responsable ? (
+            <span>{a.responsable}</span>
+          ) : null}
+        </div>
       </td>
       <td className="py-3 px-3 text-xs text-gray-500 whitespace-nowrap hidden lg:table-cell">
         <div>{formatDate(a.inicio)}</div>
@@ -219,29 +242,53 @@ function ActividadRow({ a, isAdmin, onEdit }: { a: Actividad; isAdmin: boolean; 
 
 export default function PlanesClient({ actividades: initial, isAdmin }: { actividades: Actividad[]; isAdmin: boolean }) {
   const [actividades, setActividades] = useState(initial);
+  const [areaActiva, setAreaActiva] = useState<string>("General");
   const [programa, setPrograma] = useState<"SST" | "MA">("SST");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
   const [editando, setEditando] = useState<Actividad | null>(null);
 
+  const actsByArea = useMemo(() => actividades.filter(a => a.area === areaActiva), [actividades, areaActiva]);
+  const sstActs = useMemo(() => actsByArea.filter(a => a.programa === "SST"), [actsByArea]);
+  const maActs = useMemo(() => actsByArea.filter(a => a.programa === "MA"), [actsByArea]);
+
   const filtradas = useMemo(() => {
-    return actividades
+    return actsByArea
       .filter(a => a.programa === programa)
       .filter(a => filtroEstado === "Todos" || a.estado === filtroEstado);
-  }, [actividades, programa, filtroEstado]);
-
-  const sstActs = actividades.filter(a => a.programa === "SST");
-  const maActs = actividades.filter(a => a.programa === "MA");
+  }, [actsByArea, programa, filtroEstado]);
 
   function handleSaved(updated: Actividad) {
     setActividades(prev => prev.map(a => a.id === updated.id ? { ...a, ...updated } : a));
   }
 
+  const areasConDatos = useMemo(() => {
+    const keys = new Set(actividades.map(a => a.area));
+    return AREAS.filter(a => keys.has(a.key));
+  }, [actividades]);
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Planes de trabajo</h1>
         <p className="text-sm text-gray-500 mt-1">SST ISO 45001 · Medio Ambiente ISO 14001 · 2026–2027</p>
+      </div>
+
+      {/* Tabs de área */}
+      <div className="flex flex-wrap gap-2">
+        {areasConDatos.map(a => (
+          <button
+            key={a.key}
+            onClick={() => { setAreaActiva(a.key); setFiltroEstado("Todos"); }}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+              areaActiva === a.key
+                ? "bg-gray-900 text-white border-gray-900"
+                : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+            }`}
+          >
+            <span>{a.icon}</span>
+            {a.label}
+          </button>
+        ))}
       </div>
 
       {/* Dashboard cards */}
@@ -253,7 +300,6 @@ export default function PlanesClient({ actividades: initial, isAdmin }: { activi
 
       {/* Lista */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-        {/* Tabs + filtros */}
         <div className="flex flex-wrap items-center gap-2 p-4 border-b border-gray-100">
           <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
             {PROGRAMAS.map(p => (
@@ -275,7 +321,7 @@ export default function PlanesClient({ actividades: initial, isAdmin }: { activi
               <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
                 <th className="py-2 px-3">ID</th>
                 <th className="py-2 px-3">Eje</th>
-                <th className="py-2 px-3">Actividad</th>
+                <th className="py-2 px-3">Actividad / Asignado</th>
                 <th className="py-2 px-3 hidden lg:table-cell">Fechas</th>
                 <th className="py-2 px-3">Estado</th>
                 <th className="py-2 px-3 hidden md:table-cell">Avance</th>
@@ -287,6 +333,11 @@ export default function PlanesClient({ actividades: initial, isAdmin }: { activi
               {filtradas.map(a => (
                 <ActividadRow key={a.id} a={a} isAdmin={isAdmin} onEdit={() => setEditando(a)} />
               ))}
+              {filtradas.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-sm text-gray-400">No hay actividades para este filtro.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -662,6 +662,8 @@ model Politica {
 model PlanActividad {
   id            String   @id @default(cuid())
   programa      String   // "SST" | "MA"
+  area          String   @default("General") // "General" | "Bodega" | "Calidad" | "Mantenimiento" | "Producción"
+  asignadoA     String?  // Persona específica asignada
   codigoExterno String?  // P-001, 1, 2…
   eje           String   // Eje (SST) o Linea/proceso (MA)
   clausula      String?  // Clausula ISO (MA) o null
