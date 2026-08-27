@@ -47,6 +47,8 @@ function formatDate(iso: string | null) {
 }
 
 function DashboardPrograma({ actividades, programa }: { actividades: Actividad[]; programa: typeof PROGRAMAS[number] }) {
+  const [expandido, setExpandido] = useState(false);
+
   const total = actividades.length;
   const completados = actividades.filter(a => a.estado === "Completado").length;
   const enCurso = actividades.filter(a => a.estado === "En curso").length;
@@ -81,7 +83,7 @@ function DashboardPrograma({ actividades, programa }: { actividades: Actividad[]
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
+      <div className="grid grid-cols-4 gap-2">
         {[
           { label: "Completados", value: completados, cls: "text-emerald-600" },
           { label: "En curso", value: enCurso, cls: "text-blue-600" },
@@ -95,20 +97,30 @@ function DashboardPrograma({ actividades, programa }: { actividades: Actividad[]
         ))}
       </div>
 
-      {/* Por eje */}
-      <div className="space-y-2">
-        {ejeSummary.map(({ eje, pct, total: t }) => (
-          <div key={eje}>
-            <div className="flex justify-between text-xs text-gray-600 mb-0.5">
-              <span className="truncate">{eje}</span>
-              <span className="shrink-0 ml-2 text-gray-400">{t} act. · {Math.round(pct * 100)}%</span>
+      {/* Toggle por eje */}
+      <button
+        onClick={() => setExpandido(v => !v)}
+        className="mt-4 w-full flex items-center justify-between text-xs text-gray-400 hover:text-gray-600 border-t border-gray-100 pt-3 transition-colors"
+      >
+        <span>Detalle por eje</span>
+        <span>{expandido ? "▲" : "▼"}</span>
+      </button>
+
+      {expandido && (
+        <div className="mt-3 space-y-2">
+          {ejeSummary.map(({ eje, pct, total: t }) => (
+            <div key={eje}>
+              <div className="flex justify-between text-xs text-gray-600 mb-0.5">
+                <span className="truncate">{eje}</span>
+                <span className="shrink-0 ml-2 text-gray-400">{t} act. · {Math.round(pct * 100)}%</span>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full ${programa.color} opacity-70`} style={{ width: `${pct * 100}%` }} />
+              </div>
             </div>
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className={`h-full rounded-full ${programa.color} opacity-70`} style={{ width: `${pct * 100}%` }} />
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
