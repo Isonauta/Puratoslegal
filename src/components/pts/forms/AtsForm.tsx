@@ -43,10 +43,10 @@ export default function AtsForm({ permitId, permitData }: { permitId?: string; p
       startTime: permitData?.startTime ?? "",
       endTime: permitData?.endTime ?? "",
       taskDescription: permitData?.taskDescription ?? "",
-      highRiskProcedures: permitData?.permitTypes ?? [],
+      highRiskProcedures: (permitData?.permitTypes ?? []) as AtsInput["highRiskProcedures"],
       potentialIncidents: [],
-      controlMeasures: permitData?.controlMeasures ?? [],
-      ppeRequired: permitData?.ppeRequired ?? [],
+      controlMeasures: (permitData?.controlMeasures ?? []) as AtsInput["controlMeasures"],
+      ppeRequired: (permitData?.ppeRequired ?? []) as AtsInput["ppeRequired"],
       steps: [{ taskStage: "", hazardsExposed: "", potentialIncidents: "", controls: "" }],
       workers: permitData?.workers?.length
         ? permitData.workers.map((w) => ({ fullName: w.fullName, rut: w.rut }))
