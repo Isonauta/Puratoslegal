@@ -683,3 +683,19 @@ model PlanActividad {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model AccidenteStat {
+  id              String   @id @default(cuid())
+  anio            Int
+  mes             Int      // 1-12
+  area            String   // Chocolate | WET | UHT | Laboratorio Calidad | Laboratorio Desarrollo | Bodega CD | Administración | AXTEL | PTAR
+  trabajadores    Int      @default(0)
+  horasTrabajadas Float    @default(0)
+  accidentesConTP Int      @default(0)  // con tiempo perdido
+  accidentesSinTP Int      @default(0)  // sin tiempo perdido
+  diasPerdidos    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([anio, mes, area])
+}
