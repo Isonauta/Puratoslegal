@@ -104,7 +104,7 @@ function LoginForm() {
             <p className="text-white/60 text-[10px] uppercase tracking-widest leading-none mt-0.5">Puratos Chile</p>
           </div>
         </div>
-        <span className="hidden sm:block text-white/70 text-xs">Sistema de Gestión SST</span>
+        <span className="hidden sm:block text-white/70 text-xs">Sistema Integrado de Gestión</span>
       </header>
 
       <div className="flex flex-1 flex-col lg:flex-row">
