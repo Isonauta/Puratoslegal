@@ -107,7 +107,8 @@ function LoginForm() {
         <span className="hidden sm:block text-white/70 text-xs">Sistema Integrado de Gestión</span>
       </header>
 
-      <div className="flex flex-1 flex-col lg:flex-row">
+      <div className="flex flex-1 justify-center">
+        <div className="flex flex-1 flex-col lg:flex-row w-full max-w-6xl">
         {/* Left — hero */}
         <div className="flex-1 bg-zinc-50 px-8 py-12 lg:px-16 lg:py-20 flex flex-col justify-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#C41230] mb-3">Plataforma de cumplimiento legal</p>
@@ -188,6 +189,7 @@ function LoginForm() {
               Purasafe · {new Date().getFullYear()} · Puratos Chile
             </p>
           </div>
+        </div>
         </div>
       </div>
     </div>
