@@ -1,8 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { findUser, createSessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
+import { findUser, createSessionToken } from "@/lib/auth";
+import { checkRateLimit, resetRateLimit } from "@/lib/rateLimiter";
+
+function getClientIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown"
+  );
+}
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  const { allowed, retryAfterSecs } = checkRateLimit(ip);
+
+  if (!allowed) {
+    const mins = Math.ceil((retryAfterSecs ?? 900) / 60);
+    return NextResponse.json(
+      { error: `Demasiados intentos fallidos. Intenta nuevamente en ${mins} minuto${mins !== 1 ? "s" : ""}.` },
+      { status: 429, headers: { "Retry-After": String(retryAfterSecs ?? 900) } }
+    );
+  }
+
   const { email, password } = await req.json();
 
   if (!email || !password) {
@@ -19,6 +39,9 @@ export async function POST(req: NextRequest) {
   if (!valid) {
     return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
   }
+
+  // Login exitoso — limpiar conteo de intentos
+  resetRateLimit(ip);
 
   const token = await createSessionToken({
     id: user.id ?? null,
