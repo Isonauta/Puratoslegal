@@ -699,3 +699,28 @@ model AccidenteStat {
 
   @@unique([anio, mes, area])
 }
+
+model NoConformidad {
+  id             String   @id @default(cuid())
+  numero         Int      @default(autoincrement())
+  titulo         String
+  descripcion    String
+  area           String
+  ambito         String   @default("SST") // SST | MA | SGI
+  tipo           String   @default("Interna") // Interna | Externa | Auditoria | Cliente
+  origen         String?  // descripción del origen
+  impacto        String   @default("Medio") // Alto | Medio | Bajo
+  estado         String   @default("Abierta") // Abierta | En revisión | En corrección | Cerrada
+  fechaDeteccion DateTime @default(now())
+  fechaLimite    DateTime?
+  fechaCierre    DateTime?
+  responsable    String?
+  accionInmediata String?
+  accionCorrectiva String?
+  accionPreventiva String?
+  evidencia      String?
+  verificadoPor  String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
