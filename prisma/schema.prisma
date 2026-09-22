@@ -721,6 +721,31 @@ model ObjetivoIndicador {
   updatedAt    DateTime  @updatedAt
 }
 
+model RiesgoOportunidad {
+  id            String   @id @default(cuid())
+  numero        Int      @default(autoincrement())
+  tipo          String   @default("Riesgo") // Riesgo | Oportunidad
+  programa      String   @default("SST") // SST | MA | SGI
+  proceso       String
+  descripcion   String
+  causas        String?
+  consecuencias String?
+  probabilidad  Int      // 1-5
+  impacto       Int      // 1-5
+  nivelRiesgo   Int      // probabilidad * impacto
+  clasificacion String   // Bajo | Medio | Alto | Crítico
+  tratamiento   String   @default("Mitigar") // Aceptar | Mitigar | Transferir | Eliminar | Aprovechar
+  accionControl String?
+  responsable   String?
+  fechaRevision DateTime?
+  estado        String   @default("Abierto") // Abierto | En tratamiento | Controlado | Cerrado
+  probabilidadR Int?     // residual post-control
+  impactoR      Int?     // residual post-control
+  createdBy     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 model NoConformidad {
   id             String   @id @default(cuid())
   numero         Int      @default(autoincrement())
