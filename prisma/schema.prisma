@@ -700,6 +700,27 @@ model AccidenteStat {
   @@unique([anio, mes, area])
 }
 
+model ObjetivoIndicador {
+  id           String    @id @default(cuid())
+  numero       Int       @default(autoincrement())
+  programa     String    @default("SST") // SST | MA | SGI
+  clausula     String?   // ej. "6.2.1"
+  objetivo     String
+  indicador    String
+  unidad       String    @default("%")
+  meta         Float
+  valorActual  Float     @default(0)
+  frecuencia   String    @default("Mensual") // Mensual | Trimestral | Semestral | Anual
+  responsable  String?
+  area         String?
+  anio         Int
+  estado       String    @default("En curso") // En curso | Logrado | No logrado | Suspendido
+  comentario   String?
+  createdBy    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
 model NoConformidad {
   id             String   @id @default(cuid())
   numero         Int      @default(autoincrement())
