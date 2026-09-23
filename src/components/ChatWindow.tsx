@@ -60,10 +60,10 @@ function inlineParse(text: string): React.ReactNode {
 }
 
 const SUGGESTIONS = [
-  "¿Qué dice la normativa sobre RIOHS?",
-  "¿Qué requisitos de SST están pendientes?",
-  "¿Qué necesito para cumplir con el DS 40?",
-  "¿Cuáles son los requisitos medioambientales?",
+  "¿Cuántas no conformidades abiertas tenemos?",
+  "¿Cómo vamos con los objetivos SST de este año?",
+  "¿Qué capacitaciones están pendientes?",
+  "¿Qué dice el DS 594 sobre condiciones sanitarias?",
 ];
 
 export function ChatWindow() {
@@ -137,12 +137,12 @@ export function ChatWindow() {
           {messages.length === 0 && (
             <div className="space-y-6 text-center">
               <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                <p className="text-2xl">⚖️</p>
-                <p className="mt-2 font-medium text-zinc-800 dark:text-zinc-100">
-                  Consulta sobre legislación de Puratos
+                <div className="w-12 h-12 mx-auto rounded-xl bg-[#C41230] flex items-center justify-center text-white font-bold text-xl">P</div>
+                <p className="mt-3 font-medium text-zinc-800 dark:text-zinc-100">
+                  Hola, soy Purasafe
                 </p>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  Pregunta sobre requisitos legales, artículos específicos o estado de cumplimiento.
+                  Tu asistente SIG — pregúntame sobre seguridad, medio ambiente, no conformidades, objetivos, capacitaciones o legislación de Puratos Chile.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -174,7 +174,7 @@ export function ChatWindow() {
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${
                   m.role === "user"
-                    ? "bg-blue-600 text-white leading-relaxed"
+                    ? "bg-[#C41230] text-white leading-relaxed"
                     : "border border-zinc-200 bg-white text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
                 }`}
               >
@@ -202,7 +202,7 @@ export function ChatWindow() {
           <textarea
             ref={textareaRef}
             rows={1}
-            placeholder="Escribe tu consulta legal…"
+            placeholder="Pregunta sobre SST, MA, no conformidades, objetivos…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKey}
@@ -213,13 +213,13 @@ export function ChatWindow() {
             type="button"
             onClick={() => send()}
             disabled={loading || !input.trim()}
-            className="rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+            className="rounded-xl bg-[#C41230] px-4 py-3 text-sm font-medium text-white hover:bg-[#a00e26] disabled:opacity-40"
           >
             {loading ? "…" : "Enviar"}
           </button>
         </div>
         <p className="mx-auto mt-2 max-w-2xl text-center text-xs text-zinc-400">
-          Solo responde sobre legislación aplicable a Puratos Chile · Enter para enviar
+          Asistente SIG de Puratos Chile · Enter para enviar
         </p>
       </div>
     </div>
