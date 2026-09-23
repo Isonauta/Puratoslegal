@@ -700,6 +700,31 @@ model AccidenteStat {
   @@unique([anio, mes, area])
 }
 
+model AuditoriaInterna {
+  id            String    @id @default(cuid())
+  numero        Int       @default(autoincrement())
+  titulo        String
+  programa      String    @default("SST") // SST | MA | SGI | Integrada
+  tipo          String    @default("Interna") // Interna | Externa
+  alcance       String?
+  auditores     String?
+  auditado      String?   // área/proceso auditado
+  fechaPlan     DateTime
+  fechaReal     DateTime?
+  estado        String    @default("Planificada") // Planificada | En curso | Realizada | Cancelada
+  // Hallazgos como JSON array o texto — usamos texto para simplificar
+  hallazgos     String?   // resumen de hallazgos
+  noConformidades Int     @default(0)
+  observaciones Int       @default(0)
+  oportunidades Int       @default(0)
+  conclusion    String?
+  evidencia     String?
+  proximaAuditoria DateTime?
+  createdBy     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
 model Capacitacion {
   id           String    @id @default(cuid())
   numero       Int       @default(autoincrement())
