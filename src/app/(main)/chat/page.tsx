@@ -14,7 +14,7 @@ export default function ChatPage() {
               Conversa con Purasafe
             </h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Asistente especializado en la legislación aplicable a Puratos Chile
+              Asistente SIG de Puratos Chile — seguridad, medio ambiente, calidad y más
             </p>
           </div>
         </div>
