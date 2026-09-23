@@ -700,6 +700,29 @@ model AccidenteStat {
   @@unique([anio, mes, area])
 }
 
+model Capacitacion {
+  id           String    @id @default(cuid())
+  numero       Int       @default(autoincrement())
+  titulo       String
+  descripcion  String?
+  tipo         String    @default("Inducción") // Inducción | Entrenamiento | Charla | Curso | Simulacro | Otro
+  programa     String    @default("SST") // SST | MA | SGI | General
+  area         String?
+  relator      String?
+  modalidad    String    @default("Presencial") // Presencial | Virtual | E-learning
+  fechaPlan    DateTime
+  fechaReal    DateTime?
+  duracionHrs  Float     @default(1)
+  estado       String    @default("Planificada") // Planificada | Realizada | Cancelada | Reprogramada
+  participantes Int      @default(0)
+  evaluacion   Float?    // promedio notas 1-7 o porcentaje aprobación
+  evidencia    String?
+  comentario   String?
+  createdBy    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
 model ObjetivoIndicador {
   id           String    @id @default(cuid())
   numero       Int       @default(autoincrement())
