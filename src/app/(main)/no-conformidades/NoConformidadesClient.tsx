@@ -306,6 +306,28 @@ export default function NoConformidadesClient({ items: initial, isAdmin }: { ite
         )}
       </div>
 
+      {/* Definición */}
+      <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-5 space-y-3 text-sm text-zinc-700">
+        <p className="font-semibold text-zinc-900">¿Qué es una No Conformidad y cómo se trata?</p>
+        <p>
+          Una <strong>No Conformidad (NC)</strong> es el incumplimiento de un requisito — ya sea de una norma ISO (9001, 14001, 45001),
+          de la legislación chilena aplicable, de un procedimiento interno o de un estándar de Puratos.
+          Puede originarse en una auditoría, en una inspección de terreno, en un incidente o en la detección directa de una desviación.
+        </p>
+        <div className="space-y-1.5">
+          <p className="font-medium text-zinc-800">Cómo se trata:</p>
+          <ol className="list-decimal list-inside space-y-1 text-zinc-600">
+            <li><strong>Registrar</strong> — describir el hallazgo con el mayor detalle posible (qué, dónde, cuándo).</li>
+            <li><strong>Acción inmediata</strong> — contener el problema para evitar que se propague o genere daño.</li>
+            <li><strong>Análisis de causa raíz</strong> — identificar por qué ocurrió (ej. método 5 Por Qué, Ishikawa).</li>
+            <li><strong>Acción correctiva</strong> — eliminar la causa raíz para que no vuelva a ocurrir.</li>
+            <li><strong>Acción preventiva</strong> — extender la corrección a otros procesos o áreas similares.</li>
+            <li><strong>Verificación de eficacia</strong> — confirmar que la acción correctiva funcionó antes de cerrar la NC.</li>
+          </ol>
+        </div>
+        <p className="text-xs text-zinc-400">Referencia: Cláusula 10.2 ISO 9001/14001/45001 · DS 594 MINSAL · Reglamento Interno Puratos Chile</p>
+      </div>
+
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white border border-zinc-100 rounded-xl p-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import * as XLSX from "xlsx";
 
 const PROGRAMAS = ["SST", "MA", "SGI"];
 const TIPOS = ["Riesgo", "Oportunidad"];
@@ -441,6 +442,34 @@ export default function EstrategiaRiesgosClient({ items: initial, isAdmin }: { i
     setSelected(updated);
   }
 
+  function exportarExcel() {
+    const data = items.map(r => ({
+      "N°": `RO-${String(r.numero).padStart(3, "0")}`,
+      "Tipo": r.tipo,
+      "Programa": r.programa,
+      "Proceso": r.proceso,
+      "Descripción": r.descripcion,
+      "Causas": r.causas ?? "",
+      "Consecuencias": r.consecuencias ?? "",
+      "Probabilidad": r.probabilidad,
+      "Impacto": r.impacto,
+      "Nivel de riesgo": r.nivelRiesgo,
+      "Clasificación": r.clasificacion,
+      "Tratamiento": r.tratamiento,
+      "Acción de control": r.accionControl ?? "",
+      "Responsable": r.responsable ?? "",
+      "Prob. residual": r.probabilidadR ?? "",
+      "Imp. residual": r.impactoR ?? "",
+      "Nivel residual": r.probabilidadR && r.impactoR ? r.probabilidadR * r.impactoR : "",
+      "Estado": r.estado,
+      "Fecha revisión": r.fechaRevision ? new Date(r.fechaRevision).toLocaleDateString("es-CL") : "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Riesgos y Oportunidades");
+    XLSX.writeFile(wb, `Purasafe_Estrategia_Riesgos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       {/* Header */}
@@ -449,10 +478,17 @@ export default function EstrategiaRiesgosClient({ items: initial, isAdmin }: { i
           <h1 className="text-xl font-bold text-zinc-900">Estrategia y Riesgos</h1>
           <p className="text-sm text-zinc-500 mt-0.5">Matriz de riesgos y oportunidades del SIG</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={() => setVista(v => v === "lista" ? "matriz" : "lista")}
             className="px-3 py-2 text-sm border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600">
             {vista === "lista" ? "Ver matriz" : "Ver lista"}
+          </button>
+          <button onClick={exportarExcel}
+            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600 flex items-center gap-1.5">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Exportar Excel
           </button>
           {isAdmin && (
             <button onClick={() => setShowRegistro(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-[#C41230] hover:bg-[#a00e26]">

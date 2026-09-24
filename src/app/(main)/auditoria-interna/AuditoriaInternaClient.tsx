@@ -38,6 +38,8 @@ interface Auditoria {
   estado: string;
   hallazgos: string | null;
   noConformidades: number;
+  noConformidadesAbiertas: number;
+  noConformidadesCerradas: number;
   observaciones: number;
   oportunidades: number;
   conclusion: string | null;
@@ -142,6 +144,8 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
   const [fechaReal, setFechaReal] = useState(item.fechaReal ? item.fechaReal.slice(0, 10) : "");
   const [hallazgos, setHallazgos] = useState(item.hallazgos ?? "");
   const [ncs, setNcs] = useState(String(item.noConformidades));
+  const [ncsAbiertas, setNcsAbiertas] = useState(String(item.noConformidadesAbiertas));
+  const [ncsCerradas, setNcsCerradas] = useState(String(item.noConformidadesCerradas));
   const [obs, setObs] = useState(String(item.observaciones));
   const [opps, setOpps] = useState(String(item.oportunidades));
   const [conclusion, setConclusion] = useState(item.conclusion ?? "");
@@ -154,7 +158,8 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        id: item.id, estado, fechaReal: fechaReal || null, hallazgos, noConformidades: ncs,
+        id: item.id, estado, fechaReal: fechaReal || null, hallazgos,
+        noConformidades: ncs, noConformidadesAbiertas: ncsAbiertas, noConformidadesCerradas: ncsCerradas,
         observaciones: obs, oportunidades: opps, conclusion, evidencia,
         proximaAuditoria: proximaAuditoria || null,
       }),
@@ -189,18 +194,26 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
 
           {/* Conteos de hallazgos */}
           {item.estado === "Realizada" && (
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-red-50 rounded-lg px-3 py-2">
-                <p className="text-xs text-red-400">No conformidades</p>
-                <p className="text-2xl font-bold text-red-600">{item.noConformidades}</p>
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="bg-red-50 rounded-lg px-3 py-2">
+                  <p className="text-xs text-red-400">NC Abiertas</p>
+                  <p className="text-2xl font-bold text-red-600">{item.noConformidadesAbiertas}</p>
+                </div>
+                <div className="bg-green-50 rounded-lg px-3 py-2">
+                  <p className="text-xs text-green-500">NC Cerradas</p>
+                  <p className="text-2xl font-bold text-green-600">{item.noConformidadesCerradas}</p>
+                </div>
               </div>
-              <div className="bg-yellow-50 rounded-lg px-3 py-2">
-                <p className="text-xs text-yellow-500">Observaciones</p>
-                <p className="text-2xl font-bold text-yellow-600">{item.observaciones}</p>
-              </div>
-              <div className="bg-emerald-50 rounded-lg px-3 py-2">
-                <p className="text-xs text-emerald-500">Oportunidades</p>
-                <p className="text-2xl font-bold text-emerald-600">{item.oportunidades}</p>
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="bg-yellow-50 rounded-lg px-3 py-2">
+                  <p className="text-xs text-yellow-500">Observaciones</p>
+                  <p className="text-2xl font-bold text-yellow-600">{item.observaciones}</p>
+                </div>
+                <div className="bg-emerald-50 rounded-lg px-3 py-2">
+                  <p className="text-xs text-emerald-500">Oportunidades</p>
+                  <p className="text-2xl font-bold text-emerald-600">{item.oportunidades}</p>
+                </div>
               </div>
             </div>
           )}
@@ -230,9 +243,19 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className={lbl}>No conformidades</label>
+                  <label className={lbl}>NC total</label>
                   <input className={inp} type="number" min="0" value={ncs} onChange={e => setNcs(e.target.value)} />
                 </div>
+                <div>
+                  <label className={lbl}>NC abiertas</label>
+                  <input className={inp} type="number" min="0" value={ncsAbiertas} onChange={e => setNcsAbiertas(e.target.value)} />
+                </div>
+                <div>
+                  <label className={lbl}>NC cerradas</label>
+                  <input className={inp} type="number" min="0" value={ncsCerradas} onChange={e => setNcsCerradas(e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={lbl}>Observaciones</label>
                   <input className={inp} type="number" min="0" value={obs} onChange={e => setObs(e.target.value)} />
@@ -278,17 +301,20 @@ export default function AuditoriaInternaClient({ items: initial, isAdmin }: { it
   const [selected, setSelected] = useState<Auditoria | null>(null);
   const [filEstado, setFilEstado] = useState("Todos");
   const [filPrograma, setFilPrograma] = useState("Todos");
+  const [filTipo, setFilTipo] = useState("Todos");
 
   const filtered = items.filter(i => {
     if (filEstado !== "Todos" && i.estado !== filEstado) return false;
     if (filPrograma !== "Todos" && i.programa !== filPrograma) return false;
+    if (filTipo !== "Todos" && i.tipo !== filTipo) return false;
     return true;
   });
 
   // KPIs
   const planificadas = items.filter(i => i.estado === "Planificada").length;
   const realizadas = items.filter(i => i.estado === "Realizada").length;
-  const totalNCs = items.filter(i => i.estado === "Realizada").reduce((s, i) => s + i.noConformidades, 0);
+  const ncAbiertas = items.filter(i => i.estado === "Realizada").reduce((s, i) => s + i.noConformidadesAbiertas, 0);
+  const ncCerradas = items.filter(i => i.estado === "Realizada").reduce((s, i) => s + i.noConformidadesCerradas, 0);
   const totalObs = items.filter(i => i.estado === "Realizada").reduce((s, i) => s + i.observaciones, 0);
 
   function handleSaved(item: Auditoria) {
@@ -321,8 +347,19 @@ export default function AuditoriaInternaClient({ items: initial, isAdmin }: { it
         {[
           { label: "Planificadas", value: planificadas, color: "text-blue-600" },
           { label: "Realizadas", value: realizadas, color: "text-green-600" },
-          { label: "No conformidades", value: totalNCs, color: "text-red-600" },
-          { label: "Observaciones", value: totalObs, color: "text-yellow-600" },
+          { label: "NC abiertas", value: ncAbiertas, color: ncAbiertas > 0 ? "text-red-600" : "text-zinc-800" },
+          { label: "NC cerradas", value: ncCerradas, color: "text-green-600" },
+        ].map(k => (
+          <div key={k.label} className="bg-white border border-zinc-100 rounded-xl px-4 py-3">
+            <p className="text-xs text-zinc-400 uppercase tracking-wide">{k.label}</p>
+            <p className={`text-2xl font-bold mt-1 ${k.color}`}>{k.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {[
+          { label: "Observaciones totales", value: totalObs, color: "text-yellow-600" },
+          { label: "Internas / Externas", value: `${items.filter(i => i.tipo === "Interna").length} / ${items.filter(i => i.tipo === "Externa").length}`, color: "text-zinc-800" },
         ].map(k => (
           <div key={k.label} className="bg-white border border-zinc-100 rounded-xl px-4 py-3">
             <p className="text-xs text-zinc-400 uppercase tracking-wide">{k.label}</p>
@@ -344,6 +381,13 @@ export default function AuditoriaInternaClient({ items: initial, isAdmin }: { it
           <button key={p} onClick={() => setFilPrograma(p)}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${filPrograma === p ? "bg-zinc-700 text-white border-zinc-700" : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"}`}>
             {p}
+          </button>
+        ))}
+        <span className="text-zinc-200">|</span>
+        {["Todos", ...TIPOS].map(t => (
+          <button key={t} onClick={() => setFilTipo(t)}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${filTipo === t ? "bg-sky-600 text-white border-sky-600" : "bg-white text-zinc-600 border-zinc-200 hover:border-sky-400"}`}>
+            {t}
           </button>
         ))}
       </div>

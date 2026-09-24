@@ -89,6 +89,13 @@ function RegistroModal({ onClose, onSaved }: { onClose: () => void; onSaved: (it
               <select className={inp} value={form.tipo} onChange={e => set("tipo", e.target.value)}>
                 {TIPOS.map(t => <option key={t}>{t}</option>)}
               </select>
+              <p className="mt-1 text-xs text-zinc-400 leading-relaxed">
+                {form.tipo === "Entrenamiento" && "Práctica guiada en el puesto de trabajo para desarrollar habilidades específicas de operación o procedimiento."}
+                {form.tipo === "Charla" && "Sesión informativa de corta duración (≤ 1 hora) sobre un tema puntual de seguridad, calidad o medio ambiente."}
+                {form.tipo === "Curso" && "Actividad formativa estructurada, con contenido progresivo, evaluación y registro de asistencia. Puede ser interna o externa."}
+                {form.tipo === "Inducción" && "Capacitación obligatoria para trabajadores nuevos o que cambian de área, sobre riesgos, normas y procedimientos del puesto."}
+                {form.tipo === "Simulacro" && "Ejercicio práctico de respuesta ante emergencias (evacuación, derrame, incendio) para verificar la preparación del equipo."}
+              </p>
             </div>
             <div>
               <label className={lbl}>Programa</label>
@@ -267,6 +274,7 @@ export default function CapacitacionClient({ items: initial, isAdmin }: { items:
   const realizadas = items.filter(i => i.estado === "Realizada").length;
   const totalParticipantes = items.filter(i => i.estado === "Realizada").reduce((s, i) => s + i.participantes, 0);
   const totalHrs = items.filter(i => i.estado === "Realizada").reduce((s, i) => s + i.duracionHrs, 0);
+  const sinEficacia = items.filter(i => i.estado === "Realizada" && (i.evaluacion === null || i.evaluacion === undefined)).length;
 
   // Cumplimiento: realizadas / (realizadas + planificadas vencidas)
   const hoy = new Date();
@@ -312,6 +320,21 @@ export default function CapacitacionClient({ items: initial, isAdmin }: { items:
           </div>
         ))}
       </div>
+
+      {/* Alerta eficacia */}
+      {sinEficacia > 0 && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <span className="text-amber-500 text-lg mt-0.5">⚠</span>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">
+              {sinEficacia} capacitación{sinEficacia > 1 ? "es realizadas sin" : " realizada sin"} verificación de eficacia
+            </p>
+            <p className="text-xs text-amber-600 mt-0.5">
+              Registra la evaluación (nota o % de aprobación) en cada capacitación realizada para cumplir con la cláusula 7.2 ISO 45001/14001.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Barra de cumplimiento */}
       <div className="bg-white border border-zinc-100 rounded-xl px-5 py-4">

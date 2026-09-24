@@ -60,10 +60,10 @@ function inlineParse(text: string): React.ReactNode {
 }
 
 const SUGGESTIONS = [
+  "¿Qué es la ISO 14001 y el sistema de gestión ambiental?",
+  "¿Qué es la ISO 45001 y el sistema de gestión de salud y seguridad en el trabajo?",
   "¿Cuántas no conformidades abiertas tenemos?",
   "¿Cómo vamos con los objetivos SST de este año?",
-  "¿Qué capacitaciones están pendientes?",
-  "¿Qué dice el DS 594 sobre condiciones sanitarias?",
 ];
 
 export function ChatWindow() {

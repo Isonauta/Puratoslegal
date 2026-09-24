@@ -689,6 +689,7 @@ model AccidenteStat {
   anio            Int
   mes             Int      // 1-12
   area            String   // Chocolate | WET | UHT | Laboratorio Calidad | Laboratorio Desarrollo | Bodega CD | Administración | AXTEL | PTAR
+  areaSujeta      String?  // Zona del cuerpo o área física afectada
   trabajadores    Int      @default(0)
   horasTrabajadas Float    @default(0)
   accidentesConTP Int      @default(0)  // con tiempo perdido
@@ -714,9 +715,11 @@ model AuditoriaInterna {
   estado        String    @default("Planificada") // Planificada | En curso | Realizada | Cancelada
   // Hallazgos como JSON array o texto — usamos texto para simplificar
   hallazgos     String?   // resumen de hallazgos
-  noConformidades Int     @default(0)
-  observaciones Int       @default(0)
-  oportunidades Int       @default(0)
+  noConformidades Int        @default(0)
+  noConformidadesAbiertas Int @default(0)
+  noConformidadesCerradas Int @default(0)
+  observaciones Int          @default(0)
+  oportunidades Int          @default(0)
   conclusion    String?
   evidencia     String?
   proximaAuditoria DateTime?
