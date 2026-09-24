@@ -49,8 +49,8 @@ export async function PATCH(req: NextRequest) {
 
   const body = await req.json();
   const {
-    id, estado, fechaReal, hallazgos, noConformidades, observaciones,
-    oportunidades, conclusion, evidencia, proximaAuditoria,
+    id, estado, fechaReal, hallazgos, noConformidades, noConformidadesAbiertas, noConformidadesCerradas,
+    observaciones, oportunidades, conclusion, evidencia, proximaAuditoria,
   } = body;
 
   if (!id) return NextResponse.json({ error: "Falta id" }, { status: 400 });
@@ -62,6 +62,8 @@ export async function PATCH(req: NextRequest) {
       ...(fechaReal !== undefined && { fechaReal: fechaReal ? new Date(fechaReal) : null }),
       ...(hallazgos !== undefined && { hallazgos }),
       ...(noConformidades !== undefined && { noConformidades: parseInt(noConformidades) }),
+      ...(noConformidadesAbiertas !== undefined && { noConformidadesAbiertas: parseInt(noConformidadesAbiertas) }),
+      ...(noConformidadesCerradas !== undefined && { noConformidadesCerradas: parseInt(noConformidadesCerradas) }),
       ...(observaciones !== undefined && { observaciones: parseInt(observaciones) }),
       ...(oportunidades !== undefined && { oportunidades: parseInt(oportunidades) }),
       ...(conclusion !== undefined && { conclusion }),

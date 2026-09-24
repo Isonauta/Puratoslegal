@@ -6,7 +6,7 @@ const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto"
 const ANIO_ACTUAL = 2026;
 
 type Stat = {
-  id: string; anio: number; mes: number; area: string;
+  id: string; anio: number; mes: number; area: string; areaSujeta: string | null;
   trabajadores: number; horasTrabajadas: number;
   accidentesConTP: number; accidentesSinTP: number; diasPerdidos: number;
 };
@@ -25,6 +25,7 @@ function CargaModal({ onClose, onSaved, anioSel }: { onClose: () => void; onSave
   const [anio, setAnio] = useState(anioSel);
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [area, setArea] = useState<string>(AREAS[0]);
+  const [areaSujeta, setAreaSujeta] = useState("");
   const [trabajadores, setTrabajadores] = useState("");
   const [horas, setHoras] = useState("");
   const [conTP, setConTP] = useState("");
@@ -41,6 +42,7 @@ function CargaModal({ onClose, onSaved, anioSel }: { onClose: () => void; onSave
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         anio, mes, area,
+        areaSujeta: areaSujeta.trim() || null,
         trabajadores: parseInt(trabajadores) || 0,
         horasTrabajadas: parseFloat(horas) || 0,
         accidentesConTP: parseInt(conTP) || 0,
@@ -82,6 +84,18 @@ function CargaModal({ onClose, onSaved, anioSel }: { onClose: () => void; onSave
                 {AREAS.map(a => <option key={a}>{a}</option>)}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Área sujeta del accidente</label>
+            <input
+              type="text"
+              value={areaSujeta}
+              onChange={e => setAreaSujeta(e.target.value)}
+              className={inp}
+              placeholder="ej. Mano derecha, Zona de carga, Línea de producción 2"
+            />
+            <p className="text-xs text-gray-400 mt-1">Zona del cuerpo afectada o área física donde ocurrió el accidente</p>
           </div>
 
           <div className="bg-gray-50 rounded-xl p-4 space-y-3">
