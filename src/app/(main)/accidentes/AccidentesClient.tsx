@@ -162,7 +162,7 @@ function AreaCard({ area, stats }: { area: string; stats: Stat[] }) {
     diasPerdidos: acc.diasPerdidos + s.diasPerdidos,
   }), { trabajadores: 0, horasTrabajadas: 0, accidentesConTP: 0, accidentesSinTP: 0, diasPerdidos: 0 });
 
-  const ind = calcIndicadores({ ...totales, id: "", anio: 0, mes: 0, area });
+  const ind = calcIndicadores({ ...totales, id: "", anio: 0, mes: 0, area, areaSujeta: null });
   const riesgo = ind.IA > 5 ? "alto" : ind.IA > 2 ? "medio" : "bajo";
   const riesgoColor = riesgo === "alto" ? "text-red-600 bg-red-50" : riesgo === "medio" ? "text-orange-500 bg-orange-50" : "text-emerald-600 bg-emerald-50";
 
