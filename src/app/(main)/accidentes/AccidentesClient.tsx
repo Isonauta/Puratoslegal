@@ -213,7 +213,7 @@ export default function AccidentesClient({ stats: initialStats, isAdmin }: { sta
     diasPerdidos: acc.diasPerdidos + s.diasPerdidos,
     trabajadores: acc.trabajadores + s.trabajadores,
   }), { horasTrabajadas: 0, accidentesConTP: 0, accidentesSinTP: 0, diasPerdidos: 0, trabajadores: 0 });
-  const indEmpresa = calcIndicadores({ ...totEmpresa, id:"", anio:0, mes:0, area:"" });
+  const indEmpresa = calcIndicadores({ ...totEmpresa, id:"", anio:0, mes:0, area:"", areaSujeta: null });
 
   function handleSaved(s: Stat) {
     setStats(prev => {
