@@ -821,3 +821,26 @@ model NoConformidad {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
+
+model Siniestro {
+  idSiniestro              String   @id
+  nombreUsuario            String
+  rutUsuario               String
+  tipoSiniestro            String   // Trabajo | Trayecto | Enfermedad Profesional
+  calificacion             String   // Con cobertura | Sin cobertura | Con cobertura parcial
+  conTiempoPerdido         Boolean  // CTP = true, STP = false
+  reposoActivo             Boolean  @default(false)
+  diasReposo               Int      @default(0)
+  diasPerdidosImputables   Int      @default(0)
+  fechaAccidente           DateTime?
+  fechaInicioSintomas      DateTime?
+  fechaPresentacion        DateTime?
+  fechaInicioReposo        DateTime?
+  fechaAlta                DateTime?
+  fechaProximaCitacion     DateTime?
+  centroAsistencial        String?
+  parteDelCuerpo           String?
+  mecanismoAccidente       String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
