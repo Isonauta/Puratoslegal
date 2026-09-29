@@ -3,32 +3,69 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
-// La generación puede tomar más de los 10s por defecto de Vercel —
-// sin esto, la función se corta a medio camino y aparece como 502.
+// La generación completa (6 categorías) se corre en paralelo para que el
+// tiempo total sea el de la llamada más lenta, no la suma de las 6 —
+// aun así puede acercarse al límite por defecto de Vercel sin esto.
 export const maxDuration = 60;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
 
-const SYSTEM_PROMPT = `Eres un consultor experto en Sistemas de Gestión Integrados (ISO 14001:2015 y ISO 45001:2018) especializado en análisis de contexto organizacional (cláusula 4.1).
+const CATEGORIAS = ["Político", "Económico", "Social", "Tecnológico", "Ambiental", "Legal"] as const;
 
-Tu tarea es generar un análisis PESTEL (Político, Económico, Social, Tecnológico, Ambiental, Legal) completo y realista para la organización descrita, considerando el año 2026 como período de referencia — toda la información, normativa y coyuntura que menciones debe corresponder a 2026, nunca a años anteriores.
+function systemPrompt(categoria: string) {
+  return `Eres un consultor experto en Sistemas de Gestión Integrados (ISO 14001:2015 y ISO 45001:2018) especializado en análisis de contexto organizacional (cláusula 4.1).
 
-Para cada una de las 6 categorías PESTEL, identifica 2 a 4 factores relevantes. Para cada factor, evalúa su impacto tanto en el Sistema de Gestión de Seguridad y Salud en el Trabajo (SGSST, ISO 45001) como en el Sistema de Gestión Ambiental (SGA, ISO 14001) cuando aplique, generando entradas separadas por sistema y por clasificación (Oportunidad o Amenaza).
+Tu tarea es generar SOLO la categoría "${categoria}" de un análisis PESTEL, realista, para la organización descrita, con el año 2026 como período de referencia — toda información, normativa o coyuntura que menciones debe corresponder a 2026, nunca a años anteriores.
+
+Identifica 2 a 3 factores de la categoría "${categoria}". Para cada factor, evalúa su impacto tanto en el Sistema de Gestión de Seguridad y Salud en el Trabajo (SGSST, ISO 45001) como en el Sistema de Gestión Ambiental (SGA, ISO 14001) cuando aplique, generando entradas separadas por sistema y por clasificación (Oportunidad o Amenaza).
 
 Responde EXCLUSIVAMENTE con un array JSON válido (sin markdown, sin texto adicional, sin backticks), donde cada elemento tiene esta forma exacta:
 {
-  "categoria": "Político" | "Económico" | "Social" | "Tecnológico" | "Ambiental" | "Legal",
+  "categoria": "${categoria}",
   "subFactor": "nombre corto del factor específico",
-  "descripcion": "descripción de la situación/contexto actual (2-3 líneas)",
+  "descripcion": "descripción de la situación/contexto actual (1-2 líneas)",
   "sistema": "SST" | "MA",
   "clasificacion": "Oportunidad" | "Amenaza",
   "texto": "la oportunidad o amenaza concreta para ese sistema (1-2 líneas)",
   "impactoTexto": "cómo impacta específicamente en ese sistema de gestión (1 línea)",
-  "tipoImpacto": "ej. Financiero, Legal, Operacional, Reputacional (separados por coma si aplica más de uno)",
+  "tipoImpacto": "ej. Financiero, Legal, Operacional, Reputacional",
   "relevancia": "Alta" | "Media" | "Baja"
 }
 
-Genera entre 24 y 32 elementos en total (varias entradas por factor, cubriendo SST y MA, oportunidad y amenaza cuando sea razonable). No repitas literalmente el mismo texto en dos entradas. Sé conciso en cada campo de texto — 1-2 líneas, no párrafos largos.`;
+Genera entre 4 y 8 elementos en total para esta categoría. Sé conciso — 1-2 líneas por campo de texto, nunca párrafos largos.`;
+}
+
+function contextoPrompt(c: { rubro: string; ubicaciones: string; tipoClientes: string; mercado: string; adicional: string }) {
+  return `Organización: Puratos de Chile S.P.A.
+
+RUBRO / ACTIVIDAD: ${c.rubro}
+UBICACIONES: ${c.ubicaciones || "No especificado"}
+TIPO DE CLIENTES: ${c.tipoClientes || "No especificado"}
+MERCADO / SECTOR: ${c.mercado || "No especificado"}
+CONTEXTO ADICIONAL: ${c.adicional || "No especificado"}
+
+Genera los factores en el formato JSON indicado, con período de referencia 2026.`;
+}
+
+function parseRows(raw: string): Array<Record<string, unknown>> {
+  const cleaned = raw.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const parsed = JSON.parse(cleaned);
+  if (!Array.isArray(parsed)) throw new Error("La respuesta no es un array");
+  return parsed.filter((r) => r.categoria && r.descripcion && r.sistema && r.clasificacion && r.texto);
+}
+
+async function generarCategoria(categoria: string, userPrompt: string): Promise<Array<Record<string, unknown>>> {
+  const msg = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1600,
+    system: systemPrompt(categoria),
+    messages: [{ role: "user", content: userPrompt }],
+  });
+  const block = msg.content.find((b) => b.type === "text");
+  const raw = block && block.type === "text" ? block.text : "";
+  if (msg.stop_reason === "max_tokens") throw new Error("Respuesta truncada por max_tokens");
+  return parseRows(raw);
+}
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -45,57 +82,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Falta describir el rubro/actividad de la empresa en Contexto" }, { status: 400 });
   }
 
-  const userPrompt = `Organización: Puratos de Chile S.P.A.
+  const userPrompt = contextoPrompt({ rubro, ubicaciones, tipoClientes, mercado, adicional });
 
-RUBRO / ACTIVIDAD: ${rubro}
-UBICACIONES: ${ubicaciones || "No especificado"}
-TIPO DE CLIENTES: ${tipoClientes || "No especificado"}
-MERCADO / SECTOR: ${mercado || "No especificado"}
-CONTEXTO ADICIONAL: ${adicional || "No especificado"}
-
-Genera el análisis PESTEL completo en el formato JSON indicado, con período de referencia 2026.`;
-
-  let raw: string;
-  try {
-    const msg = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4500,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userPrompt }],
-    });
-    const block = msg.content.find((b) => b.type === "text");
-    raw = block && block.type === "text" ? block.text : "";
-    if (msg.stop_reason === "max_tokens") {
-      console.error("[/api/pestel/generar] Respuesta truncada por max_tokens");
-      return NextResponse.json({ error: "La respuesta de la IA se cortó por ser muy larga. Intenta de nuevo." }, { status: 502 });
-    }
-  } catch (err) {
-    console.error("[/api/pestel/generar] Error llamando a Anthropic:", err);
-    const detail = err instanceof Anthropic.APIError
-      ? `${err.status ?? ""} ${err.message}`.trim()
-      : err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: `Falló la llamada al modelo de IA: ${detail}` }, { status: 502 });
-  }
-
-  const cleaned = raw.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    return NextResponse.json({ error: "La IA no devolvió un JSON válido. Intenta de nuevo." }, { status: 502 });
-  }
-
-  if (!Array.isArray(parsed) || parsed.length === 0) {
-    return NextResponse.json({ error: "La IA no generó factores PESTEL" }, { status: 502 });
-  }
-
-  const rows = (parsed as Array<Record<string, unknown>>).filter(
-    (r) => r.categoria && r.descripcion && r.sistema && r.clasificacion && r.texto
+  const results = await Promise.allSettled(
+    CATEGORIAS.map((categoria) => generarCategoria(categoria, userPrompt))
   );
 
+  const rows: Array<Record<string, unknown>> = [];
+  const fallidas: string[] = [];
+  results.forEach((res, i) => {
+    if (res.status === "fulfilled") {
+      rows.push(...res.value);
+    } else {
+      const detail = res.reason instanceof Anthropic.APIError
+        ? `${res.reason.status ?? ""} ${res.reason.message}`.trim()
+        : res.reason instanceof Error ? res.reason.message : String(res.reason);
+      console.error(`[/api/pestel/generar] Falló categoría ${CATEGORIAS[i]}:`, detail);
+      fallidas.push(`${CATEGORIAS[i]} (${detail})`);
+    }
+  });
+
   if (rows.length === 0) {
-    return NextResponse.json({ error: "Los factores generados no tienen el formato esperado" }, { status: 502 });
+    return NextResponse.json(
+      { error: `No se pudo generar ningún factor. Detalle: ${fallidas.join("; ")}` },
+      { status: 502 }
+    );
   }
 
   const result = await prisma.pestelFactor.createMany({
@@ -113,5 +124,8 @@ Genera el análisis PESTEL completo en el formato JSON indicado, con período de
     })),
   });
 
-  return NextResponse.json({ count: result.count }, { status: 201 });
+  return NextResponse.json(
+    { count: result.count, warning: fallidas.length > 0 ? `No se pudieron generar: ${fallidas.join("; ")}` : null },
+    { status: 201 }
+  );
 }

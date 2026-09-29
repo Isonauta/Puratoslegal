@@ -173,10 +173,12 @@ export default function PestelTab({ items: initial, isAdmin, onChanged, contexto
       body: JSON.stringify(contexto),
     });
     if (res.ok) {
+      const body = await res.json().catch(() => ({}));
+      if (body.warning) alert(body.warning);
       window.location.reload();
     } else {
       const body = await res.json().catch(() => ({}));
-      setGenerarError(body.error ?? "No se pudo generar el análisis PESTEL.");
+      setGenerarError(body.error ?? "No se pudo generar el análisis PESTEL (sin detalle — probablemente un timeout).");
       setGenerando(false);
     }
   }
