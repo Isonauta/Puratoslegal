@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
       ...(programa ? { programa } : {}),
       ...(tipo ? { tipo } : {}),
     },
+    include: { origenFoda: true },
     orderBy: [{ nivelRiesgo: "desc" }, { createdAt: "desc" }],
   });
   return NextResponse.json(items);
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
     tipo, programa, proceso, descripcion, causas, consecuencias,
-    probabilidad, impacto, tratamiento, accionControl, responsable, fechaRevision,
+    probabilidad, impacto, tratamiento, accionControl, responsable, fechaRevision, origenFodaId,
   } = body;
 
   if (!proceso || !descripcion || !probabilidad || !impacto) {
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
       accionControl: accionControl ?? null,
       responsable: responsable ?? null,
       fechaRevision: fechaRevision ? new Date(fechaRevision) : null,
+      origenFodaId: origenFodaId ?? null,
       createdBy: session.email ?? null,
     },
   });

@@ -792,9 +792,44 @@ model RiesgoOportunidad {
   estado        String   @default("Abierto") // Abierto | En tratamiento | Controlado | Cerrado
   probabilidadR Int?     // residual post-control
   impactoR      Int?     // residual post-control
+  origenFodaId  String?
+  origenFoda    FodaItem? @relation(fields: [origenFodaId], references: [id])
   createdBy     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model PestelFactor {
+  id             String   @id @default(cuid())
+  categoria      String   // Político | Económico | Social | Tecnológico | Ambiental | Legal
+  subFactor      String?
+  descripcion    String
+  sistema        String   // SST | MA
+  clasificacion  String   // Oportunidad | Amenaza
+  texto          String
+  impactoTexto   String?
+  tipoImpacto    String?
+  relevancia     String?  // Alta | Media | Baja
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  fodaItems      FodaItem[]
+}
+
+model FodaItem {
+  id             String   @id @default(cuid())
+  sistema        String   // SST | MA
+  ambito         String   // EXTERNAS | INTERNAS
+  cuestion       String   // Económico, Social-Cultural, Talento Humano, etc.
+  cuadrante      String   // Fortaleza | Oportunidad | Debilidad | Amenaza
+  descripcion    String
+  tipoImpacto    String?
+  origenPestelId String?
+  origenPestel   PestelFactor? @relation(fields: [origenPestelId], references: [id])
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  riesgos        RiesgoOportunidad[]
 }
 
 model NoConformidad {

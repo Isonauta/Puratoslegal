@@ -65,6 +65,7 @@ interface RO {
   estado: string;
   probabilidadR: number | null;
   impactoR: number | null;
+  origenFodaId?: string | null;
   createdAt: string;
 }
 
@@ -295,6 +296,7 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${PROGRAMA_COLOR[item.programa]}`}>{item.programa}</span>
             <span className="text-xs text-zinc-400">{item.tipo} RO-{String(item.numero).padStart(3, "0")}</span>
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${CLASIF_COLOR[item.clasificacion]}`}>{item.clasificacion}</span>
+            {item.origenFodaId && <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500">↳ Origen: FODA</span>}
           </div>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 text-xl leading-none">×</button>
         </div>
@@ -471,13 +473,9 @@ export default function EstrategiaRiesgosClient({ items: initial, isAdmin }: { i
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-zinc-900">Estrategia y Riesgos</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">Matriz de riesgos y oportunidades del SIG</p>
-        </div>
+    <div className="space-y-6">
+      {/* Toolbar */}
+      <div className="flex items-center justify-end">
         <div className="flex gap-2 flex-wrap">
           <button onClick={() => setVista(v => v === "lista" ? "matriz" : "lista")}
             className="px-3 py-2 text-sm border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600">
