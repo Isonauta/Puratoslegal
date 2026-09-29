@@ -329,7 +329,7 @@ export default function FodaTab({ items: initial, pestel, isAdmin, onChanged, on
                 <div className="flex items-center gap-2 shrink-0">
                   {isAdmin && (item.cuadrante === "Oportunidad" || item.cuadrante === "Amenaza") && (
                     <button onClick={() => setPromoviendo(item)} className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[#C41230]/30 text-[#C41230] hover:bg-[#C41230]/5">
-                      Promover a Riesgo/Oport.
+                      → Agregar a matriz
                     </button>
                   )}
                   {isAdmin && (

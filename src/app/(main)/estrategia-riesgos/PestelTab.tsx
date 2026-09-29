@@ -124,11 +124,18 @@ function NuevoModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item:
   );
 }
 
-export default function PestelTab({ items: initial, isAdmin, onChanged }: { items: Pestel[]; isAdmin: boolean; onChanged: (items: Pestel[]) => void }) {
+export default function PestelTab({ items: initial, isAdmin, onChanged, contexto, fodaOrigenIds }: {
+  items: Pestel[]; isAdmin: boolean; onChanged: (items: Pestel[]) => void;
+  contexto: { rubro: string; ubicaciones: string; tipoClientes: string; mercado: string; adicional: string };
+  fodaOrigenIds: Set<string>;
+}) {
   const [items, setItems] = useState<Pestel[]>(initial);
   const [showNuevo, setShowNuevo] = useState(false);
   const [filSistema, setFilSistema] = useState("Todos");
   const [filCategoria, setFilCategoria] = useState("Todas");
+  const [generando, setGenerando] = useState(false);
+  const [generarError, setGenerarError] = useState<string | null>(null);
+  const [agregandoFoda, setAgregandoFoda] = useState<string | null>(null);
 
   const filtered = items.filter((i) => {
     if (filSistema !== "Todos" && i.sistema !== filSistema) return false;
@@ -153,16 +160,62 @@ export default function PestelTab({ items: initial, isAdmin, onChanged }: { item
     }
   }
 
+  async function handleGenerar() {
+    if (!contexto.rubro.trim()) {
+      setGenerarError('Completa al menos "Rubro / Actividad" en la pestaña Contexto antes de generar.');
+      return;
+    }
+    setGenerando(true);
+    setGenerarError(null);
+    const res = await fetch("/api/pestel/generar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(contexto),
+    });
+    if (res.ok) {
+      window.location.reload();
+    } else {
+      const body = await res.json().catch(() => ({}));
+      setGenerarError(body.error ?? "No se pudo generar el análisis PESTEL.");
+      setGenerando(false);
+    }
+  }
+
+  async function handleAgregarFoda(item: Pestel) {
+    setAgregandoFoda(item.id);
+    await fetch("/api/foda", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sistema: item.sistema,
+        ambito: "EXTERNAS",
+        cuestion: item.categoria,
+        cuadrante: item.clasificacion === "Oportunidad" ? "Oportunidad" : "Amenaza",
+        descripcion: item.texto,
+        tipoImpacto: item.tipoImpacto,
+        origenPestelId: item.id,
+      }),
+    });
+    window.location.reload();
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-sm text-zinc-500">Análisis de factores externos (cláusula 4.1) — Político, Económico, Social, Tecnológico, Ambiental y Legal.</p>
         {isAdmin && (
-          <button onClick={() => setShowNuevo(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-[#C41230] hover:bg-[#a00e26]">
-            <span className="text-base leading-none">+</span> Nuevo factor
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handleGenerar} disabled={generando}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-[#C41230] hover:bg-[#a00e26] disabled:opacity-60">
+              <span className="text-base leading-none">✦</span> {generando ? "Generando…" : "Generar análisis PESTEL con IA"}
+            </button>
+            <button onClick={() => setShowNuevo(true)} className="px-4 py-2 text-sm border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600">
+              + Nuevo factor
+            </button>
+          </div>
         )}
       </div>
+      {generarError && <p className="text-sm text-red-600">{generarError}</p>}
 
       <div className="flex flex-wrap gap-2 items-center">
         {["Todos", ...SISTEMAS].map((s) => (
@@ -200,7 +253,17 @@ export default function PestelTab({ items: initial, isAdmin, onChanged }: { item
                   {item.tipoImpacto && <p className="text-xs text-zinc-400 mt-1">Impacto: {item.tipoImpacto}</p>}
                 </div>
                 {isAdmin && (
-                  <button onClick={() => handleDelete(item.id)} className="text-zinc-300 hover:text-red-500 text-lg leading-none shrink-0">×</button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {fodaOrigenIds.has(item.id) ? (
+                      <span className="text-xs font-medium px-2.5 py-1.5 rounded-lg text-emerald-600">✓ En FODA</span>
+                    ) : (
+                      <button onClick={() => handleAgregarFoda(item)} disabled={agregandoFoda === item.id}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 hover:border-[#C41230] hover:text-[#C41230] disabled:opacity-60">
+                        {agregandoFoda === item.id ? "Agregando…" : "+ Agregar a FODA"}
+                      </button>
+                    )}
+                    <button onClick={() => handleDelete(item.id)} className="text-zinc-300 hover:text-red-500 text-lg leading-none">×</button>
+                  </div>
                 )}
               </div>
             </div>

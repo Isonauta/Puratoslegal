@@ -8,7 +8,7 @@ export default async function EstrategiaRiesgosPage() {
   const session = await getSession();
   const isAdmin = session?.isAdmin ?? false;
 
-  const [rawRiesgos, rawPestel, rawFoda] = await Promise.all([
+  const [rawRiesgos, rawPestel, rawFoda, partesInteresadas, contextoConfig] = await Promise.all([
     prisma.riesgoOportunidad.findMany({
       include: { origenFoda: true },
       orderBy: [{ nivelRiesgo: "desc" }, { createdAt: "desc" }],
@@ -18,7 +18,20 @@ export default async function EstrategiaRiesgosPage() {
       include: { origenPestel: true },
       orderBy: [{ cuestion: "asc" }, { createdAt: "desc" }],
     }),
+    prisma.parteInteresada.findMany({ orderBy: [{ createdAt: "asc" }] }),
+    prisma.siteConfig.findMany({ where: { key: { startsWith: "contexto." } } }),
   ]);
+
+  // Valores por defecto tomados del alcance real del SIG (SIG-R-100) —
+  // el admin puede editarlos en la pestaña Contexto antes de generar el PESTEL.
+  const contextoMap = Object.fromEntries(contextoConfig.map((c) => [c.key.replace("contexto.", ""), c.value]));
+  const contexto = {
+    rubro: contextoMap.rubro ?? "Elaboración de materias primas para panadería, pastelería, chocolatería y planta de cremas UHT, desde la recepción de materias primas hasta el almacenamiento de producto terminado.",
+    ubicaciones: contextoMap.ubicaciones ?? "Av. Aeropuerto 9790, Cerrillos, Región Metropolitana (comuna colindante con Lo Espejo).",
+    tipoClientes: contextoMap.tipoClientes ?? "Clientes corporativos B2B (panadería, pastelería, chocolatería) nacionales e internacionales, incluyendo cadenas de retail.",
+    mercado: contextoMap.mercado ?? "Industria alimentaria — ingredientes y materias primas para panadería, pastelería y chocolatería. Filial de Puratos Group (multinacional belga).",
+    adicional: contextoMap.adicional ?? "",
+  };
 
   const riesgos = rawRiesgos.map((r) => ({
     ...r,
@@ -41,5 +54,14 @@ export default async function EstrategiaRiesgosPage() {
     origenPestel: f.origenPestel ? { ...f.origenPestel, createdAt: f.origenPestel.createdAt.toISOString(), updatedAt: f.origenPestel.updatedAt.toISOString() } : null,
   }));
 
-  return <ContextoClient riesgos={riesgos} pestel={pestel} foda={foda} isAdmin={isAdmin} />;
+  return (
+    <ContextoClient
+      riesgos={riesgos}
+      pestel={pestel}
+      foda={foda}
+      partesInteresadas={partesInteresadas}
+      contexto={contexto}
+      isAdmin={isAdmin}
+    />
+  );
 }

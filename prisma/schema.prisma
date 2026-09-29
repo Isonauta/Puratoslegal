@@ -816,6 +816,20 @@ model PestelFactor {
   fodaItems      FodaItem[]
 }
 
+model ParteInteresada {
+  id                   String   @id @default(cuid())
+  nombre               String
+  poder                String   // Alto | Bajo
+  impacto              String   // Alto | Bajo
+  necesidades          String?
+  expectativas         String?
+  mecanismoSeguimiento String?
+  responsable          String?
+  createdBy            String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
 model FodaItem {
   id             String   @id @default(cuid())
   sistema        String   // SST | MA
