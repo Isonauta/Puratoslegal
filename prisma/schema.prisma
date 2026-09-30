@@ -926,3 +926,74 @@ model Siniestro {
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }
+
+model GestionCambio {
+  id                          String   @id @default(cuid())
+  codigo                      String   @unique // CAM-2026-001
+  numero                      Int      @default(autoincrement())
+
+  // Paso 1 · Identificación y registro
+  tipoCambio                  String?  // Interno | Externo
+  naturalezaCambio            String?  // Permanente | Temporal
+  categoria                   String?
+  area                        String?
+  descripcion                 String
+  motivo                      String?
+  fechaSolicitud              DateTime @default(now())
+  fechaImplementacionPrevista DateTime?
+  solicitanteNombre           String?
+
+  // Paso 2 · Evaluación de impacto (solo si es significativo)
+  esSignificativo             Boolean  @default(false)
+  impactoCalidad               Boolean  @default(false)
+  impactoSst                  Boolean  @default(false)
+  impactoAmbiental            Boolean  @default(false)
+  peligrosIdentificados       String?
+  riesgosEvaluados            String?
+  controlesPropuestos         String?
+  evaluadoPor                 String?
+  fechaEvaluacion             DateTime?
+
+  // Paso 3 · Autorización
+  autorizadoPor               String?
+  fechaAutorizacion           DateTime?
+  comentarioAutorizacion      String?
+
+  // Paso 4 · Actualización de planes / procedimientos / matriz de riesgos
+  requiereCapacitacion        Boolean  @default(false)
+  requiereProcedimientos      Boolean  @default(false)
+  requiereMatrizRiesgos       Boolean  @default(false)
+  detalleActualizacion        String?
+  responsableActualizacion    String?
+
+  // Paso 5 · Implementación y seguimiento
+  fechaImplementacion         DateTime?
+  seguimiento                 String?
+  responsableImplementacion   String?
+
+  // Paso 6 · Validación de eficacia (si no es eficaz, vuelve a evaluación — ciclo_revision)
+  eficaz                      Boolean?
+  validadoPor                 String?
+  fechaValidacion             DateTime?
+  observacionesValidacion     String?
+  cicloRevision                Int      @default(1)
+
+  estado                      String   @default("Solicitado") // Solicitado | En evaluación | Autorizado | Rechazado | Implementado | Cerrado
+  createdBy                   String?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  historial                   CambioHistorial[]
+}
+
+model CambioHistorial {
+  id             String   @id @default(cuid())
+  cambioId       String
+  cambio         GestionCambio @relation(fields: [cambioId], references: [id], onDelete: Cascade)
+  paso           String   // Registro | Evaluación | Autorización | Actualización de planes | Implementación | Validación
+  estadoAnterior String?
+  estadoNuevo    String?
+  comentario     String?
+  realizadoPor   String?
+  createdAt      DateTime @default(now())
+}
