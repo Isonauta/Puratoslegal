@@ -10,6 +10,22 @@ const TRATAMIENTOS_RIESGO = ["Mitigar", "Aceptar", "Transferir", "Eliminar"];
 const TRATAMIENTOS_OPP = ["Aprovechar", "Aceptar", "Mitigar"];
 const SCALE = [1, 2, 3, 4, 5];
 
+const PROB_CRITERIO: Record<number, string> = {
+  1: "Rara — evento extraordinario, poco probable en 5+ años",
+  2: "Improbable — podría ocurrir una vez cada 2-5 años",
+  3: "Posible — podría presentarse una vez al año",
+  4: "Probable — frecuencia esperada varias veces al año",
+  5: "Casi segura — ocurrencia continua u observada de forma habitual",
+};
+
+const IMPACTO_CRITERIO: Record<number, string> = {
+  1: "Insignificante — sin efecto en objetivos ni personas",
+  2: "Menor — desviación leve, subsanable con recursos inmediatos",
+  3: "Moderado — afecta metas del proceso, requiere acción correctiva",
+  4: "Mayor — incumplimiento grave de norma o requisito, pérdidas relevantes",
+  5: "Catastrófico — paralización, sanción grave o pérdida de certificación",
+};
+
 const CUADRANTE_COLOR: Record<string, string> = {
   Fortaleza: "bg-blue-100 text-blue-700 border-blue-200",
   Oportunidad: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -186,7 +202,7 @@ function PromoverModal({ item, onClose, onPromoted }: { item: Foda; onClose: () 
               <label className={lbl}>Probabilidad (1-5) *</label>
               <div className="flex gap-1">
                 {SCALE.map((n) => (
-                  <button key={n} type="button" onClick={() => set("probabilidad", String(n))}
+                  <button key={n} type="button" onClick={() => set("probabilidad", String(n))} title={PROB_CRITERIO[n]}
                     className={`flex-1 py-1.5 rounded text-sm font-semibold border transition-colors ${form.probabilidad === String(n) ? "bg-[#C41230] text-white border-[#C41230]" : "border-zinc-200 text-zinc-600"}`}>
                     {n}
                   </button>
@@ -197,7 +213,7 @@ function PromoverModal({ item, onClose, onPromoted }: { item: Foda; onClose: () 
               <label className={lbl}>Impacto (1-5) *</label>
               <div className="flex gap-1">
                 {SCALE.map((n) => (
-                  <button key={n} type="button" onClick={() => set("impacto", String(n))}
+                  <button key={n} type="button" onClick={() => set("impacto", String(n))} title={IMPACTO_CRITERIO[n]}
                     className={`flex-1 py-1.5 rounded text-sm font-semibold border transition-colors ${form.impacto === String(n) ? "bg-[#C41230] text-white border-[#C41230]" : "border-zinc-200 text-zinc-600"}`}>
                     {n}
                   </button>

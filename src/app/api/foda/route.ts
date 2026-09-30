@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
         cuadrante: String(r.cuadrante),
         descripcion: String(r.descripcion),
         tipoImpacto: r.tipoImpacto ? String(r.tipoImpacto) : null,
+        origenPestelId: r.origenPestelId ? String(r.origenPestelId) : null,
         createdBy: session.email ?? null,
       })),
     });

@@ -10,6 +10,22 @@ const TRATAMIENTOS_OPP = ["Aprovechar", "Aceptar", "Mitigar"];
 const ESTADOS = ["Abierto", "En tratamiento", "Controlado", "Cerrado"];
 const SCALE = [1, 2, 3, 4, 5];
 
+const PROB_CRITERIO: Record<number, string> = {
+  1: "Rara — evento extraordinario, poco probable en 5+ años",
+  2: "Improbable — podría ocurrir una vez cada 2-5 años",
+  3: "Posible — podría presentarse una vez al año",
+  4: "Probable — frecuencia esperada varias veces al año",
+  5: "Casi segura — ocurrencia continua u observada de forma habitual",
+};
+
+const IMPACTO_CRITERIO: Record<number, string> = {
+  1: "Insignificante — sin efecto en objetivos ni personas",
+  2: "Menor — desviación leve, subsanable con recursos inmediatos",
+  3: "Moderado — afecta metas del proceso, requiere acción correctiva",
+  4: "Mayor — incumplimiento grave de norma o requisito, pérdidas relevantes",
+  5: "Catastrófico — paralización, sanción grave o pérdida de certificación",
+};
+
 const CLASIF_COLOR: Record<string, string> = {
   Crítico: "bg-red-100 text-red-700 border-red-200",
   Alto: "bg-orange-100 text-orange-700 border-orange-200",
@@ -199,7 +215,7 @@ function RegistroModal({ onClose, onSaved }: { onClose: () => void; onSaved: (it
               <label className={lbl}>Probabilidad (1-5) *</label>
               <div className="flex gap-1">
                 {SCALE.map(n => (
-                  <button key={n} type="button" onClick={() => set("probabilidad", String(n))}
+                  <button key={n} type="button" onClick={() => set("probabilidad", String(n))} title={PROB_CRITERIO[n]}
                     className={`flex-1 py-1.5 rounded text-sm font-semibold border transition-colors ${form.probabilidad === String(n) ? "bg-[#C41230] text-white border-[#C41230]" : "border-zinc-200 text-zinc-600 hover:border-[#C41230]"}`}>
                     {n}
                   </button>
@@ -210,7 +226,7 @@ function RegistroModal({ onClose, onSaved }: { onClose: () => void; onSaved: (it
               <label className={lbl}>Impacto (1-5) *</label>
               <div className="flex gap-1">
                 {SCALE.map(n => (
-                  <button key={n} type="button" onClick={() => set("impacto", String(n))}
+                  <button key={n} type="button" onClick={() => set("impacto", String(n))} title={IMPACTO_CRITERIO[n]}
                     className={`flex-1 py-1.5 rounded text-sm font-semibold border transition-colors ${form.impacto === String(n) ? "bg-[#C41230] text-white border-[#C41230]" : "border-zinc-200 text-zinc-600 hover:border-[#C41230]"}`}>
                     {n}
                   </button>
@@ -367,7 +383,7 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
                     <p className="text-xs text-zinc-400 mb-1">Probabilidad</p>
                     <div className="flex gap-1">
                       {SCALE.map(n => (
-                        <button key={n} type="button" onClick={() => setProbR(String(n))}
+                        <button key={n} type="button" onClick={() => setProbR(String(n))} title={PROB_CRITERIO[n]}
                           className={`flex-1 py-1 rounded text-xs font-semibold border transition-colors ${probR === String(n) ? "bg-[#C41230] text-white border-[#C41230]" : "border-zinc-200 text-zinc-600"}`}>
                           {n}
                         </button>
@@ -378,7 +394,7 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
                     <p className="text-xs text-zinc-400 mb-1">Impacto</p>
                     <div className="flex gap-1">
                       {SCALE.map(n => (
-                        <button key={n} type="button" onClick={() => setImpR(String(n))}
+                        <button key={n} type="button" onClick={() => setImpR(String(n))} title={IMPACTO_CRITERIO[n]}
                           className={`flex-1 py-1 rounded text-xs font-semibold border transition-colors ${impR === String(n) ? "bg-[#C41230] text-white border-[#C41230]" : "border-zinc-200 text-zinc-600"}`}>
                           {n}
                         </button>

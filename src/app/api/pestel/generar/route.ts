@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
 // La generación completa (6 categorías) se corre en paralelo para que el
@@ -109,23 +108,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const result = await prisma.pestelFactor.createMany({
-    data: rows.map((r) => ({
-      categoria: String(r.categoria),
-      subFactor: r.subFactor ? String(r.subFactor) : null,
-      descripcion: String(r.descripcion),
-      sistema: String(r.sistema),
-      clasificacion: String(r.clasificacion),
-      texto: String(r.texto),
-      impactoTexto: r.impactoTexto ? String(r.impactoTexto) : null,
-      tipoImpacto: r.tipoImpacto ? String(r.tipoImpacto) : null,
-      relevancia: r.relevancia ? String(r.relevancia) : null,
-      createdBy: session.email ?? null,
-    })),
-  });
+  // No se guarda directo: se devuelve para que el admin revise y elija
+  // cuáles incorporar antes de escribir en la base (POST a /api/pestel).
+  const normalized = rows.map((r) => ({
+    categoria: String(r.categoria),
+    subFactor: r.subFactor ? String(r.subFactor) : null,
+    descripcion: String(r.descripcion),
+    sistema: String(r.sistema),
+    clasificacion: String(r.clasificacion),
+    texto: String(r.texto),
+    impactoTexto: r.impactoTexto ? String(r.impactoTexto) : null,
+    tipoImpacto: r.tipoImpacto ? String(r.tipoImpacto) : null,
+    relevancia: r.relevancia ? String(r.relevancia) : null,
+  }));
 
   return NextResponse.json(
-    { count: result.count, warning: fallidas.length > 0 ? `No se pudieron generar: ${fallidas.join("; ")}` : null },
-    { status: 201 }
+    { rows: normalized, warning: fallidas.length > 0 ? `No se pudieron generar: ${fallidas.join("; ")}` : null },
+    { status: 200 }
   );
 }
