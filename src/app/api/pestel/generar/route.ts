@@ -23,16 +23,16 @@ Responde EXCLUSIVAMENTE con un array JSON válido (sin markdown, sin texto adici
 {
   "categoria": "${categoria}",
   "subFactor": "nombre corto del factor específico",
-  "descripcion": "descripción de la situación/contexto actual (1-2 líneas)",
+  "descripcion": "descripción de la situación/contexto actual (1 oración corta)",
   "sistema": "SST" | "MA",
   "clasificacion": "Oportunidad" | "Amenaza",
-  "texto": "la oportunidad o amenaza concreta para ese sistema (1-2 líneas)",
-  "impactoTexto": "cómo impacta específicamente en ese sistema de gestión (1 línea)",
+  "texto": "la oportunidad o amenaza concreta para ese sistema (1 oración corta)",
+  "impactoTexto": "cómo impacta específicamente en ese sistema de gestión (1 oración corta)",
   "tipoImpacto": "ej. Financiero, Legal, Operacional, Reputacional",
   "relevancia": "Alta" | "Media" | "Baja"
 }
 
-Genera entre 4 y 8 elementos en total para esta categoría. Sé conciso — 1-2 líneas por campo de texto, nunca párrafos largos.`;
+Genera entre 3 y 5 elementos en total para esta categoría. Sé muy conciso — una oración corta por campo de texto, nunca párrafos. No agregues explicaciones fuera del JSON.`;
 }
 
 function contextoPrompt(c: { rubro: string; ubicaciones: string; tipoClientes: string; mercado: string; adicional: string }) {
@@ -57,7 +57,7 @@ function parseRows(raw: string): Array<Record<string, unknown>> {
 async function generarCategoria(categoria: string, userPrompt: string): Promise<Array<Record<string, unknown>>> {
   const msg = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 1600,
+    max_tokens: 3500,
     system: systemPrompt(categoria),
     messages: [{ role: "user", content: userPrompt }],
   });
