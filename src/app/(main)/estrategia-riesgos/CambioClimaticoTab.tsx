@@ -17,9 +17,13 @@ export interface Determinacion {
 
 const PASOS = ["1. Determinación Cláusulas 4.1 y 4.2", "2. Riesgos Físicos, de Transición y Oportunidades", "3. Dictamen y Declaración Formal"];
 
-function NuevaDeterminacionModal({ onClose, onSaved }: { onClose: () => void; onSaved: (d: Determinacion) => void }) {
+interface ContextoEmpresa { rubro: string; ubicaciones: string; tipoClientes: string; mercado: string; adicional: string }
+
+function NuevaDeterminacionModal({ contexto, onClose, onSaved }: { contexto: ContextoEmpresa; onClose: () => void; onSaved: (d: Determinacion) => void }) {
   const [paso, setPaso] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [generando, setGenerando] = useState(false);
+  const [generarError, setGenerarError] = useState<string | null>(null);
   const [form, setForm] = useState({
     esPertinente: "true",
     justificacion: "",
@@ -30,6 +34,36 @@ function NuevaDeterminacionModal({ onClose, onSaved }: { onClose: () => void; on
     responsable: "",
   });
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
+
+  async function handleGenerar() {
+    if (!contexto.rubro.trim()) {
+      setGenerarError('Completa al menos "Rubro / Actividad" en la pestaña Contexto antes de generar.');
+      return;
+    }
+    setGenerando(true);
+    setGenerarError(null);
+    const res = await fetch("/api/determinacion-climatica/generar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(contexto),
+    });
+    if (res.ok) {
+      const body = await res.json();
+      setForm((p) => ({
+        ...p,
+        esPertinente: String(body.esPertinente),
+        justificacion: body.justificacion,
+        expectativasPartesInteresadas: body.expectativasPartesInteresadas,
+        riesgosFisicos: body.riesgosFisicos,
+        riesgosTransicion: body.riesgosTransicion,
+        oportunidadesClimaticas: body.oportunidadesClimaticas,
+      }));
+    } else {
+      const body = await res.json().catch(() => ({}));
+      setGenerarError(body.error ?? "No se pudo generar la determinación.");
+    }
+    setGenerando(false);
+  }
 
   async function handleSubmit() {
     setSaving(true);
@@ -53,8 +87,15 @@ function NuevaDeterminacionModal({ onClose, onSaved }: { onClose: () => void; on
             <h2 className="text-base font-semibold text-zinc-900">Evaluación de Adenda de Cambio Climático</h2>
             <p className="text-xs text-zinc-500 mt-0.5">Resolución conjunta ISO/IAF 2024 — Cláusulas 4.1 y 4.2</p>
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 text-xl leading-none">×</button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button type="button" onClick={handleGenerar} disabled={generando}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white rounded-lg bg-[#C41230] hover:bg-[#a00e26] disabled:opacity-60">
+              <span className="leading-none">✦</span> {generando ? "Generando…" : "Generar con IA"}
+            </button>
+            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 text-xl leading-none">×</button>
+          </div>
         </div>
+        {generarError && <p className="text-sm text-red-600 px-6 pt-3">{generarError}</p>}
 
         <div className="flex gap-1 px-6 pt-4 border-b border-zinc-100">
           {PASOS.map((p, i) => (
@@ -212,8 +253,8 @@ function DeclaracionFormal({ d }: { d: Determinacion }) {
   );
 }
 
-export default function CambioClimaticoTab({ items: initial, isAdmin, onChanged }: {
-  items: Determinacion[]; isAdmin: boolean; onChanged: (items: Determinacion[]) => void;
+export default function CambioClimaticoTab({ items: initial, isAdmin, onChanged, contexto }: {
+  items: Determinacion[]; isAdmin: boolean; onChanged: (items: Determinacion[]) => void; contexto: ContextoEmpresa;
 }) {
   const [items, setItems] = useState<Determinacion[]>(initial);
   const [showNueva, setShowNueva] = useState(false);
@@ -271,7 +312,7 @@ export default function CambioClimaticoTab({ items: initial, isAdmin, onChanged 
         </div>
       )}
 
-      {showNueva && <NuevaDeterminacionModal onClose={() => setShowNueva(false)} onSaved={handleSaved} />}
+      {showNueva && <NuevaDeterminacionModal contexto={contexto} onClose={() => setShowNueva(false)} onSaved={handleSaved} />}
     </div>
   );
 }

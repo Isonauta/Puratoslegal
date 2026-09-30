@@ -65,7 +65,7 @@ export default function ContextoClient({ riesgos, pestel, foda, partesInteresada
       )}
 
       {tab === "Cambio Climático" && (
-        <CambioClimaticoTab items={climaticaItems} isAdmin={isAdmin} onChanged={setClimaticaItems} />
+        <CambioClimaticoTab items={climaticaItems} isAdmin={isAdmin} onChanged={setClimaticaItems} contexto={contexto} />
       )}
 
       {tab === "PESTEL" && (
