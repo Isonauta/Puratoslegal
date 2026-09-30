@@ -25,6 +25,57 @@ function estrategiaDe(poder: string, impacto: string) {
   return ESTRATEGIA[`${poder}-${impacto}`] ?? ESTRATEGIA["Bajo-Bajo"];
 }
 
+const CUADRANTES: { poder: string; impacto: string; bg: string; border: string; badge?: string }[] = [
+  { poder: "Alto", impacto: "Bajo", bg: "bg-red-50/60", border: "border-red-100" },
+  { poder: "Alto", impacto: "Alto", bg: "bg-emerald-50/60", border: "border-emerald-200", badge: "PRIORIDAD ALTA" },
+  { poder: "Bajo", impacto: "Bajo", bg: "bg-zinc-50", border: "border-zinc-100" },
+  { poder: "Bajo", impacto: "Alto", bg: "bg-orange-50/60", border: "border-orange-100" },
+];
+
+function MatrizVisual({ items, onSelect }: { items: ParteInteresada[]; onSelect: (p: ParteInteresada) => void }) {
+  return (
+    <div className="bg-white border border-zinc-100 rounded-xl p-4">
+      <p className="text-sm font-semibold text-zinc-800 mb-0.5">Matriz de Partes Interesadas</p>
+      <p className="text-xs text-zinc-500 mb-4">Priorización según poder e impacto en el Sistema de Gestión Integrado</p>
+      <div className="flex gap-2">
+        <div className="flex items-center shrink-0">
+          <span className="text-[10px] font-semibold text-zinc-400 tracking-wide" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
+            ↑ PODER
+          </span>
+        </div>
+        <div className="flex-1">
+          <div className="grid grid-cols-2 grid-rows-2 gap-1.5 aspect-[4/3] sm:aspect-[16/9]">
+            {CUADRANTES.map((q) => {
+              const est = estrategiaDe(q.poder, q.impacto);
+              const enCuadrante = items.filter((i) => i.poder === q.poder && i.impacto === q.impacto);
+              return (
+                <div key={`${q.poder}-${q.impacto}`} className={`relative rounded-lg border ${q.bg} ${q.border} p-2.5 overflow-hidden`}>
+                  <div className="flex items-start justify-between gap-1 mb-2">
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wide leading-tight">{est.label}</span>
+                    {q.badge && <span className="shrink-0 text-[9px] font-bold text-white bg-[#C41230] px-1.5 py-0.5 rounded">{q.badge}</span>}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {enCuadrante.map((item) => (
+                      <button key={item.id} onClick={() => onSelect(item)}
+                        className="flex flex-col items-center gap-0.5 group" title={item.nombre}>
+                        <span className={`w-6 h-6 rounded-full border-2 ${est.dot} border-white shadow-sm group-hover:scale-110 transition-transform`} />
+                        <span className="text-[10px] text-zinc-600 font-medium text-center leading-tight max-w-[70px] truncate group-hover:text-[#C41230]">{item.nombre}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex justify-center mt-1.5">
+            <span className="text-[10px] font-semibold text-zinc-400 tracking-wide">IMPACTO →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EditModal({ item, onClose, onSaved }: { item: ParteInteresada | null; onClose: () => void; onSaved: (p: ParteInteresada) => void }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -132,17 +183,8 @@ export default function PartesInteresadasTab({ items: initial, isAdmin, onChange
 
   return (
     <div className="space-y-4">
-      <div className="bg-white border border-zinc-100 rounded-xl p-4">
-        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Matriz Poder × Impacto</p>
-        <p className="text-sm text-zinc-500 mb-3">Poder: capacidad de influenciar las políticas y decisiones de la dirección. Impacto: qué tan afectada puede verse (o afectar) la parte interesada por la gestión de calidad, medio ambiente y SST.</p>
-        <div className="flex flex-wrap gap-4">
-          {Object.entries(ESTRATEGIA).map(([key, v]) => (
-            <span key={key} className="flex items-center gap-1.5 text-xs text-zinc-600">
-              <span className={`w-2 h-2 rounded-full ${v.dot}`} /> {v.label}
-            </span>
-          ))}
-        </div>
-      </div>
+      <MatrizVisual items={items} onSelect={setEditing} />
+      <p className="text-xs text-zinc-400 px-1">Poder: capacidad de influenciar las políticas y decisiones de la dirección. Impacto: qué tan afectada puede verse (o afectar) la parte interesada por la gestión de calidad, medio ambiente y SST. Haz clic en una burbuja para ver el detalle.</p>
 
       {isAdmin && (
         <div className="flex justify-end">
