@@ -8,7 +8,7 @@ export default async function EstrategiaRiesgosPage() {
   const session = await getSession();
   const isAdmin = session?.isAdmin ?? false;
 
-  const [rawRiesgos, rawPestel, rawFoda, partesInteresadas, contextoConfig] = await Promise.all([
+  const [rawRiesgos, rawPestel, rawFoda, partesInteresadas, contextoConfig, rawClimatica] = await Promise.all([
     prisma.riesgoOportunidad.findMany({
       include: { origenFoda: true },
       orderBy: [{ nivelRiesgo: "desc" }, { createdAt: "desc" }],
@@ -20,6 +20,7 @@ export default async function EstrategiaRiesgosPage() {
     }),
     prisma.parteInteresada.findMany({ orderBy: [{ createdAt: "asc" }] }),
     prisma.siteConfig.findMany({ where: { key: { startsWith: "contexto." } } }),
+    prisma.determinacionClimatica.findMany({ orderBy: [{ fecha: "desc" }] }),
   ]);
 
   // Valores por defecto tomados del alcance real del SIG (SIG-R-100) —
@@ -54,6 +55,13 @@ export default async function EstrategiaRiesgosPage() {
     origenPestel: f.origenPestel ? { ...f.origenPestel, createdAt: f.origenPestel.createdAt.toISOString(), updatedAt: f.origenPestel.updatedAt.toISOString() } : null,
   }));
 
+  const climatica = rawClimatica.map((d) => ({
+    ...d,
+    fecha: d.fecha.toISOString(),
+    createdAt: d.createdAt.toISOString(),
+    updatedAt: d.updatedAt.toISOString(),
+  }));
+
   return (
     <ContextoClient
       riesgos={riesgos}
@@ -61,6 +69,7 @@ export default async function EstrategiaRiesgosPage() {
       foda={foda}
       partesInteresadas={partesInteresadas}
       contexto={contexto}
+      climatica={climatica}
       isAdmin={isAdmin}
     />
   );

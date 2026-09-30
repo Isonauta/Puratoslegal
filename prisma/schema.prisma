@@ -831,6 +831,21 @@ model ParteInteresada {
   updatedAt            DateTime @updatedAt
 }
 
+model DeterminacionClimatica {
+  id                            String   @id @default(cuid())
+  fecha                         DateTime @default(now())
+  esPertinente                  Boolean
+  justificacion                 String
+  expectativasPartesInteresadas String?
+  riesgosFisicos                String?
+  riesgosTransicion             String?
+  oportunidadesClimaticas       String?
+  responsable                   String?
+  createdBy                     String?
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+}
+
 model FodaItem {
   id             String   @id @default(cuid())
   sistema        String   // SST | MA
