@@ -9,6 +9,7 @@ export interface ParteInteresada {
   impacto: string;
   necesidades: string | null;
   expectativas: string | null;
+  estrategias: string | null;
   mecanismoSeguimiento: string | null;
   responsable: string | null;
 }
@@ -28,7 +29,7 @@ function EditModal({ item, onClose, onSaved }: { item: ParteInteresada | null; o
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     nombre: item?.nombre ?? "", poder: item?.poder ?? "Alto", impacto: item?.impacto ?? "Alto",
-    necesidades: item?.necesidades ?? "", expectativas: item?.expectativas ?? "",
+    necesidades: item?.necesidades ?? "", expectativas: item?.expectativas ?? "", estrategias: item?.estrategias ?? "",
     mecanismoSeguimiento: item?.mecanismoSeguimiento ?? "", responsable: item?.responsable ?? "",
   });
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
@@ -81,6 +82,10 @@ function EditModal({ item, onClose, onSaved }: { item: ParteInteresada | null; o
           <div>
             <label className={lbl}>Expectativas</label>
             <textarea className={inp} rows={2} value={form.expectativas} onChange={(e) => set("expectativas", e.target.value)} />
+          </div>
+          <div>
+            <label className={lbl}>Estrategias</label>
+            <textarea className={inp} rows={2} value={form.estrategias} onChange={(e) => set("estrategias", e.target.value)} />
           </div>
           <div>
             <label className={lbl}>Mecanismo de seguimiento</label>

@@ -823,6 +823,7 @@ model ParteInteresada {
   impacto              String   // Alto | Bajo
   necesidades          String?
   expectativas         String?
+  estrategias          String?
   mecanismoSeguimiento String?
   responsable          String?
   createdBy            String?

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!session?.isAdmin) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const body = await req.json();
-  const { nombre, poder, impacto, necesidades, expectativas, mecanismoSeguimiento, responsable } = body;
+  const { nombre, poder, impacto, necesidades, expectativas, estrategias, mecanismoSeguimiento, responsable } = body;
 
   if (!nombre || !poder || !impacto) {
     return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
       nombre, poder, impacto,
       necesidades: necesidades ?? null,
       expectativas: expectativas ?? null,
+      estrategias: estrategias ?? null,
       mecanismoSeguimiento: mecanismoSeguimiento ?? null,
       responsable: responsable ?? null,
       createdBy: session.email ?? null,
@@ -36,7 +37,7 @@ export async function PATCH(req: NextRequest) {
   if (!session?.isAdmin) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const body = await req.json();
-  const { id, nombre, poder, impacto, necesidades, expectativas, mecanismoSeguimiento, responsable } = body;
+  const { id, nombre, poder, impacto, necesidades, expectativas, estrategias, mecanismoSeguimiento, responsable } = body;
   if (!id) return NextResponse.json({ error: "Falta id" }, { status: 400 });
 
   const item = await prisma.parteInteresada.update({
@@ -47,6 +48,7 @@ export async function PATCH(req: NextRequest) {
       ...(impacto !== undefined && { impacto }),
       ...(necesidades !== undefined && { necesidades }),
       ...(expectativas !== undefined && { expectativas }),
+      ...(estrategias !== undefined && { estrategias }),
       ...(mecanismoSeguimiento !== undefined && { mecanismoSeguimiento }),
       ...(responsable !== undefined && { responsable }),
     },
