@@ -906,6 +906,7 @@ model Siniestro {
   centroAsistencial        String?
   parteDelCuerpo           String?
   mecanismoAccidente       String?
+  area                     String?  // Chocolate | WET | UHT | Laboratorio Calidad | Laboratorio Desarrollo | Bodega CD | Administración | AXTEL | PTAR — para cruzar con Accidentabilidad DS67
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }

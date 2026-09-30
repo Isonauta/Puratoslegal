@@ -25,24 +25,42 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
-  // Bulk import: array of records
+  // Bulk import: array of records. El área se asigna a mano en la ficha del
+  // siniestro (no viene en el reporte de la Mutual) — si el import no trae
+  // área, no se debe pisar la que ya se haya asignado manualmente.
   if (Array.isArray(body)) {
     const created = await prisma.$transaction(
-      body.map((r) =>
-        prisma.siniestro.upsert({
+      body.map((r) => {
+        const { area: _area, ...rest } = r;
+        return prisma.siniestro.upsert({
           where: { idSiniestro: r.idSiniestro },
           create: r,
-          update: r,
-        })
-      )
+          update: r.area ? r : rest,
+        });
+      })
     );
     return NextResponse.json({ count: created.length });
   }
 
+  const { area: _area, ...rest } = body;
   const item = await prisma.siniestro.upsert({
     where: { idSiniestro: body.idSiniestro },
     create: body,
-    update: body,
+    update: body.area ? body : rest,
+  });
+  return NextResponse.json(item);
+}
+
+export async function PATCH(req: NextRequest) {
+  const session = await getSession();
+  if (!session?.isAdmin) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  const { idSiniestro, area } = await req.json();
+  if (!idSiniestro) return NextResponse.json({ error: "Falta idSiniestro" }, { status: 400 });
+
+  const item = await prisma.siniestro.update({
+    where: { idSiniestro },
+    data: { area: area || null },
   });
   return NextResponse.json(item);
 }

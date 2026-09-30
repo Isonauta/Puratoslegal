@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 const AREAS = ["Chocolate","WET","UHT","Laboratorio Calidad","Laboratorio Desarrollo","Bodega CD","Administración","AXTEL","PTAR"] as const;
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
@@ -33,6 +33,27 @@ function CargaModal({ onClose, onSaved, anioSel }: { onClose: () => void; onSave
   const [dias, setDias] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  type Resumen = { conTP: number; sinTP: number; diasPerdidos: number };
+  const [resumen, setResumen] = useState<{ trabajo: Resumen; trayecto: Resumen; enfermedadProfesional: Resumen; totalCasos: number } | null>(null);
+  const [cargandoResumen, setCargandoResumen] = useState(false);
+
+  useEffect(() => {
+    let cancelado = false;
+    setCargandoResumen(true);
+    fetch(`/api/siniestros/resumen?anio=${anio}&mes=${mes}&area=${encodeURIComponent(area)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelado) setResumen(d); })
+      .finally(() => { if (!cancelado) setCargandoResumen(false); });
+    return () => { cancelado = true; };
+  }, [anio, mes, area]);
+
+  function usarValoresDeTrabajo() {
+    if (!resumen) return;
+    setConTP(String(resumen.trabajo.conTP));
+    setSinTP(String(resumen.trabajo.sinTP));
+    setDias(String(resumen.trabajo.diasPerdidos));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -110,6 +131,35 @@ function CargaModal({ onClose, onSaved, anioSel }: { onClose: () => void; onSave
                 <input type="number" min="0" step="0.5" value={horas} onChange={e => setHoras(e.target.value)} className={inp} placeholder="0" />
               </div>
             </div>
+          </div>
+
+          <div className="bg-blue-50 rounded-xl p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Según Siniestros (referencia)</p>
+              {resumen && resumen.trabajo.conTP + resumen.trabajo.sinTP > 0 && (
+                <button type="button" onClick={usarValoresDeTrabajo} className="text-xs font-medium text-blue-700 underline hover:no-underline">
+                  Usar estos valores
+                </button>
+              )}
+            </div>
+            {cargandoResumen ? (
+              <p className="text-xs text-blue-600">Buscando siniestros de {area} en {MESES[mes - 1]} {anio}…</p>
+            ) : resumen ? (
+              <>
+                <p className="text-xs text-blue-800">
+                  <strong>Trabajo:</strong> {resumen.trabajo.conTP} con TP, {resumen.trabajo.sinTP} sin TP, {resumen.trabajo.diasPerdidos} días perdidos
+                </p>
+                {(resumen.trayecto.conTP + resumen.trayecto.sinTP > 0) && (
+                  <p className="text-xs text-blue-600">Trayecto (no incluido arriba): {resumen.trayecto.conTP} con TP, {resumen.trayecto.sinTP} sin TP</p>
+                )}
+                {(resumen.enfermedadProfesional.conTP + resumen.enfermedadProfesional.sinTP > 0) && (
+                  <p className="text-xs text-blue-600">Enfermedad profesional (no incluida arriba): {resumen.enfermedadProfesional.conTP} con TP, {resumen.enfermedadProfesional.sinTP} sin TP</p>
+                )}
+                {resumen.totalCasos === 0 && (
+                  <p className="text-xs text-blue-500">No hay siniestros registrados con área &quot;{area}&quot; para este mes — puede que falte asignarles el área en el módulo Siniestros.</p>
+                )}
+              </>
+            ) : null}
           </div>
 
           <div className="bg-orange-50 rounded-xl p-4 space-y-3">

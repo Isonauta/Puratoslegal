@@ -22,12 +22,15 @@ interface Siniestro {
   centroAsistencial: string | null;
   parteDelCuerpo: string | null;
   mecanismoAccidente: string | null;
+  area: string | null;
 }
 
 interface Props {
   initialItems: Siniestro[];
   isAdmin: boolean;
 }
+
+const AREAS = ["Chocolate", "WET", "UHT", "Laboratorio Calidad", "Laboratorio Desarrollo", "Bodega CD", "Administración", "AXTEL", "PTAR"] as const;
 
 function parseFecha(val: string | null | undefined): string | null {
   if (!val || val === "---" || val.trim() === "") return null;
@@ -64,7 +67,9 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
   const [items, setItems] = useState<Siniestro[]>(initialItems);
   const [filTipo, setFilTipo] = useState("Todos");
   const [filAnio, setFilAnio] = useState("Todos");
+  const [filArea, setFilArea] = useState("Todos");
   const [selected, setSelected] = useState<Siniestro | null>(null);
+  const [guardandoArea, setGuardandoArea] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -82,12 +87,30 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
 
   const filtered = items.filter((i) => {
     if (filTipo !== "Todos" && i.tipoSiniestro !== filTipo) return false;
+    if (filArea === "null" && i.area) return false;
+    if (filArea !== "Todos" && filArea !== "null" && i.area !== filArea) return false;
     if (filAnio !== "Todos") {
       const d = i.fechaAccidente ?? i.fechaInicioSintomas;
       if (!d || new Date(d).getFullYear().toString() !== filAnio) return false;
     }
     return true;
   });
+
+  async function handleGuardarArea(area: string) {
+    if (!selected) return;
+    setGuardandoArea(true);
+    const res = await fetch("/api/siniestros", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idSiniestro: selected.idSiniestro, area: area || null }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setItems((prev) => prev.map((i) => (i.idSiniestro === updated.idSiniestro ? updated : i)));
+      setSelected(updated);
+    }
+    setGuardandoArea(false);
+  }
 
   const totalDias = filtered.reduce((s, i) => s + i.diasPerdidosImputables, 0);
   const conTP = filtered.filter((i) => i.conTiempoPerdido).length;
@@ -127,6 +150,7 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
           centroAsistencial: String(r["Centro asistencial de tratamiento"] ?? "") || null,
           parteDelCuerpo: String(r["Parte del cuerpo lesionada"] ?? "") || null,
           mecanismoAccidente: String(r["Mecanismo del accidente"] ?? "") || null,
+          area: String(r["Área"] ?? r["Area"] ?? "") || null,
         }));
 
       const res = await fetch("/api/siniestros", {
@@ -169,6 +193,7 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
       "Centro Asistencial": i.centroAsistencial ?? "",
       "Parte del Cuerpo": i.parteDelCuerpo ?? "",
       "Mecanismo Accidente": i.mecanismoAccidente ?? "",
+      "Área": i.area ?? "",
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -263,6 +288,17 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
               </button>
             ))}
           </div>
+          <div className="flex gap-1 flex-wrap">
+            <select
+              value={filArea}
+              onChange={(e) => setFilArea(e.target.value)}
+              className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300"
+            >
+              <option value="Todos">Todas las áreas</option>
+              {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
+              <option value="null">Sin área asignada</option>
+            </select>
+          </div>
         </div>
 
         {/* Table */}
@@ -276,6 +312,7 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Calificación</th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500">Días perdidos</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Fecha accidente</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Área</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Parte del cuerpo</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Mecanismo</th>
               </tr>
@@ -283,7 +320,7 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-zinc-400">
+                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-zinc-400">
                     No hay siniestros registrados.{isAdmin && " Importa un archivo Excel para comenzar."}
                   </td>
                 </tr>
@@ -315,6 +352,13 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
                   </td>
                   <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
                     {fmtFecha(i.fechaAccidente ?? i.fechaInicioSintomas)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {i.area ? (
+                      <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">{i.area}</span>
+                    ) : (
+                      <span className="text-xs text-amber-500">Sin asignar</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400 max-w-[180px] truncate">
                     {i.parteDelCuerpo ?? "—"}
@@ -350,6 +394,25 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
               <button onClick={() => setSelected(null)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                Área (para cruzar con Accidentabilidad DS67)
+              </label>
+              {isAdmin ? (
+                <select
+                  value={selected.area ?? ""}
+                  disabled={guardandoArea}
+                  onChange={(e) => handleGuardarArea(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+                >
+                  <option value="">— Sin asignar —</option>
+                  {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              ) : (
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">{selected.area ?? "Sin asignar"}</p>
+              )}
             </div>
 
             <div className="space-y-1">
