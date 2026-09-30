@@ -160,7 +160,7 @@ export default function PartesInteresadasTab({ items: initial, isAdmin, onChange
             const est = estrategiaDe(item.poder, item.impacto);
             return (
               <div key={item.id} className="bg-white border border-zinc-100 rounded-xl px-5 py-4">
-                <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
                   <p className="text-sm font-medium text-zinc-800">{item.nombre}</p>
                   <div className="flex items-center gap-3 text-xs text-zinc-500">
                     <span>Poder: <strong>{item.poder}</strong></span>
@@ -174,6 +174,37 @@ export default function PartesInteresadasTab({ items: initial, isAdmin, onChange
                     )}
                   </div>
                 </div>
+                {(item.necesidades || item.expectativas || item.estrategias || item.mecanismoSeguimiento) && (
+                  <div className="grid sm:grid-cols-2 gap-3 pt-2 border-t border-zinc-50">
+                    {item.necesidades && (
+                      <div>
+                        <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide">Necesidades</p>
+                        <p className="text-xs text-zinc-600 mt-0.5">{item.necesidades}</p>
+                      </div>
+                    )}
+                    {item.expectativas && (
+                      <div>
+                        <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide">Expectativas</p>
+                        <p className="text-xs text-zinc-600 mt-0.5">{item.expectativas}</p>
+                      </div>
+                    )}
+                    {item.estrategias && (
+                      <div>
+                        <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide">Estrategias</p>
+                        <p className="text-xs text-zinc-600 mt-0.5">{item.estrategias}</p>
+                      </div>
+                    )}
+                    {item.mecanismoSeguimiento && (
+                      <div>
+                        <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wide">Mecanismo de seguimiento</p>
+                        <p className="text-xs text-zinc-600 mt-0.5">{item.mecanismoSeguimiento}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {item.responsable && (
+                  <p className="text-[11px] text-zinc-400 mt-2">Responsable: {item.responsable}</p>
+                )}
               </div>
             );
           })}
