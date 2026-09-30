@@ -21,6 +21,16 @@ const PROGRAMA_COLOR: Record<string, string> = {
   SGI: "bg-violet-100 text-violet-700",
 };
 
+interface PlanAccion {
+  id: string;
+  descripcion: string;
+  responsable: string | null;
+  recursos: string | null;
+  fechaLimite: string | null;
+  estado: string;
+  fechaCierre: string | null;
+}
+
 interface OI {
   id: string;
   numero: number;
@@ -39,7 +49,16 @@ interface OI {
   comentario: string | null;
   createdAt: string;
   updatedAt: string;
+  planAccion: PlanAccion[];
 }
+
+const ESTADOS_PLAN = ["Pendiente", "En proceso", "Completado"];
+
+const PLAN_ESTADO_COLOR: Record<string, string> = {
+  Pendiente: "bg-zinc-100 text-zinc-500",
+  "En proceso": "bg-blue-100 text-blue-700",
+  Completado: "bg-green-100 text-green-700",
+};
 
 function avancePct(valorActual: number, meta: number): number {
   if (meta === 0) return 0;
@@ -55,10 +74,12 @@ function semaforoColor(pct: number, estado: string): string {
 }
 
 // ── Modal Registro ──────────────────────────────────────────────────────────
-function RegistroModal({ onClose, onSaved }: { onClose: () => void; onSaved: (item: OI) => void }) {
+function RegistroModal({ objetivoPrefill, programaPrefill, onClose, onSaved }: {
+  objetivoPrefill?: string; programaPrefill?: string; onClose: () => void; onSaved: (item: OI) => void;
+}) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    programa: "SST", clausula: "", objetivo: "", indicador: "",
+    programa: programaPrefill ?? "SST", clausula: "", objetivo: objetivoPrefill ?? "", indicador: "",
     unidad: "%", meta: "", frecuencia: "Mensual",
     responsable: "", area: "", anio: String(ANIO_ACTUAL), comentario: "",
   });
@@ -87,7 +108,7 @@ function RegistroModal({ onClose, onSaved }: { onClose: () => void; onSaved: (it
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-          <h2 className="text-base font-semibold text-zinc-900">Nuevo Objetivo / Indicador</h2>
+          <h2 className="text-base font-semibold text-zinc-900">{objetivoPrefill ? "Nuevo indicador" : "Nuevo Objetivo / Indicador"}</h2>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 text-xl leading-none">×</button>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
@@ -105,7 +126,7 @@ function RegistroModal({ onClose, onSaved }: { onClose: () => void; onSaved: (it
           </div>
           <div>
             <label className={lbl}>Objetivo *</label>
-            <input className={inp} placeholder="ej. Reducir la tasa de accidentabilidad" value={form.objetivo} onChange={e => set("objetivo", e.target.value)} required />
+            <input className={inp} placeholder="ej. Reducir la tasa de accidentabilidad" value={form.objetivo} onChange={e => set("objetivo", e.target.value)} readOnly={!!objetivoPrefill} required />
           </div>
           <div>
             <label className={lbl}>Indicador *</label>
@@ -171,6 +192,11 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
 
   const pct = avancePct(parseFloat(valorActual) || 0, item.meta);
 
+  const [plan, setPlan] = useState<PlanAccion[]>(item.planAccion);
+  const [showAccionForm, setShowAccionForm] = useState(false);
+  const [accionForm, setAccionForm] = useState({ descripcion: "", responsable: "", fechaLimite: "", recursos: "" });
+  const [guardandoAccion, setGuardandoAccion] = useState(false);
+
   async function handleSave() {
     setSaving(true);
     const res = await fetch("/api/objetivos-indicadores", {
@@ -180,9 +206,53 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
     });
     if (res.ok) {
       const data = await res.json();
-      onUpdated(data);
+      onUpdated({ ...data, planAccion: plan });
     }
     setSaving(false);
+  }
+
+  async function handleAgregarAccion(e: React.FormEvent) {
+    e.preventDefault();
+    if (!accionForm.descripcion.trim()) return;
+    setGuardandoAccion(true);
+    const res = await fetch("/api/objetivos-indicadores/plan-accion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ indicadorId: item.id, ...accionForm }),
+    });
+    if (res.ok) {
+      const nueva = await res.json();
+      const next = [nueva, ...plan];
+      setPlan(next);
+      onUpdated({ ...item, planAccion: next });
+      setAccionForm({ descripcion: "", responsable: "", fechaLimite: "", recursos: "" });
+      setShowAccionForm(false);
+    }
+    setGuardandoAccion(false);
+  }
+
+  async function handleCambiarEstadoAccion(id: string, nuevoEstado: string) {
+    const res = await fetch("/api/objetivos-indicadores/plan-accion", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, estado: nuevoEstado, fechaCierre: nuevoEstado === "Completado" ? new Date().toISOString() : null }),
+    });
+    if (res.ok) {
+      const actualizada = await res.json();
+      const next = plan.map((p) => (p.id === id ? actualizada : p));
+      setPlan(next);
+      onUpdated({ ...item, planAccion: next });
+    }
+  }
+
+  async function handleEliminarAccion(id: string) {
+    if (!confirm("¿Eliminar esta acción del plan?")) return;
+    const res = await fetch(`/api/objetivos-indicadores/plan-accion?id=${id}`, { method: "DELETE" });
+    if (res.ok) {
+      const next = plan.filter((p) => p.id !== id);
+      setPlan(next);
+      onUpdated({ ...item, planAccion: next });
+    }
   }
 
   const inp = "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-[#C41230] focus:ring-2 focus:ring-[#C41230]/20 outline-none";
@@ -230,6 +300,72 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
             {item.clausula && <div><span className="text-zinc-400">Cláusula: </span><span className="text-zinc-700">{item.clausula}</span></div>}
           </div>
 
+          <hr className="border-zinc-100" />
+
+          {/* Plan de acción */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-zinc-400 uppercase tracking-wide font-semibold">Plan de acción</p>
+              {isAdmin && !showAccionForm && (
+                <button onClick={() => setShowAccionForm(true)} className="text-xs font-medium text-[#C41230] hover:underline">
+                  + Agregar acción al plan
+                </button>
+              )}
+            </div>
+
+            {showAccionForm && (
+              <form onSubmit={handleAgregarAccion} className="bg-zinc-50 rounded-lg p-3 space-y-2 mb-3">
+                <textarea className={inp} rows={2} placeholder="Qué se va a hacer…" value={accionForm.descripcion}
+                  onChange={(e) => setAccionForm((p) => ({ ...p, descripcion: e.target.value }))} required />
+                <div className="grid grid-cols-2 gap-2">
+                  <input className={inp} placeholder="Responsable…" value={accionForm.responsable}
+                    onChange={(e) => setAccionForm((p) => ({ ...p, responsable: e.target.value }))} />
+                  <input className={inp} type="date" value={accionForm.fechaLimite}
+                    onChange={(e) => setAccionForm((p) => ({ ...p, fechaLimite: e.target.value }))} />
+                </div>
+                <input className={inp} placeholder="Recursos necesarios…" value={accionForm.recursos}
+                  onChange={(e) => setAccionForm((p) => ({ ...p, recursos: e.target.value }))} />
+                <div className="flex justify-end gap-2 pt-1">
+                  <button type="button" onClick={() => setShowAccionForm(false)} className="px-3 py-1.5 text-xs rounded-lg border border-zinc-200 hover:bg-white">Cancelar</button>
+                  <button type="submit" disabled={guardandoAccion} className="px-4 py-1.5 text-xs font-medium text-white rounded-lg bg-[#C41230] hover:bg-[#a00e26] disabled:opacity-60">
+                    {guardandoAccion ? "Guardando…" : "Agregar acción →"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {plan.length === 0 ? (
+              <p className="text-xs text-zinc-400">Sin acciones registradas.</p>
+            ) : (
+              <div className="space-y-2">
+                {plan.map((a) => (
+                  <div key={a.id} className="border border-zinc-100 rounded-lg px-3 py-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm text-zinc-800 flex-1">{a.descripcion}</p>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${PLAN_ESTADO_COLOR[a.estado] ?? "bg-zinc-100 text-zinc-500"}`}>{a.estado}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-zinc-400 mt-1 flex-wrap">
+                      {a.responsable && <span>{a.responsable}</span>}
+                      {a.fechaLimite && <span>Vence {new Date(a.fechaLimite).toLocaleDateString("es-CL")}</span>}
+                      {a.recursos && <span>· {a.recursos}</span>}
+                    </div>
+                    {isAdmin && (
+                      <div className="flex gap-2 mt-2">
+                        {ESTADOS_PLAN.filter((e) => e !== a.estado).map((e) => (
+                          <button key={e} onClick={() => handleCambiarEstadoAccion(a.id, e)}
+                            className="text-xs px-2 py-1 rounded border border-zinc-200 text-zinc-500 hover:border-[#C41230] hover:text-[#C41230]">
+                            Marcar {e}
+                          </button>
+                        ))}
+                        <button onClick={() => handleEliminarAccion(a.id)} className="text-xs px-2 py-1 text-zinc-300 hover:text-red-500">Eliminar</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {isAdmin && (
             <>
               <hr className="border-zinc-100" />
@@ -272,6 +408,7 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
 export default function ObjetivosIndicadoresClient({ items: initial, isAdmin }: { items: OI[]; isAdmin: boolean }) {
   const [items, setItems] = useState<OI[]>(initial);
   const [showRegistro, setShowRegistro] = useState(false);
+  const [nuevoIndicadorPara, setNuevoIndicadorPara] = useState<{ objetivo: string; programa: string } | null>(null);
   const [selected, setSelected] = useState<OI | null>(null);
   const [filPrograma, setFilPrograma] = useState("Todos");
   const [filAnio, setFilAnio] = useState(String(ANIO_ACTUAL));
@@ -293,8 +430,19 @@ export default function ObjetivosIndicadoresClient({ items: initial, isAdmin }: 
   const pctCumplimiento = total > 0 ? Math.round((logrados / total) * 100) : 0;
 
   function handleSaved(item: OI) {
-    setItems(prev => [item, ...prev]);
+    setItems(prev => [{ ...item, planAccion: item.planAccion ?? [] }, ...prev]);
     setShowRegistro(false);
+    setNuevoIndicadorPara(null);
+  }
+
+  // Agrupa por familia de objetivo (mismo texto de "objetivo"), preservando el
+  // orden de aparición — igual patrón visual que usa FMA (objetivos_sgi →
+  // objetivos_indicadores), sin requerir separar la tabla en dos.
+  const familias: { objetivo: string; programa: string; items: OI[] }[] = [];
+  for (const it of filtered) {
+    const fam = familias.find((f) => f.objetivo === it.objetivo);
+    if (fam) fam.items.push(it);
+    else familias.push({ objetivo: it.objetivo, programa: it.programa, items: [it] });
   }
 
   function handleUpdated(updated: OI) {
@@ -369,51 +517,76 @@ export default function ObjetivosIndicadoresClient({ items: initial, isAdmin }: 
         </select>
       </div>
 
-      {/* Lista */}
-      {filtered.length === 0 ? (
+      {/* Lista agrupada por familia de objetivo */}
+      {familias.length === 0 ? (
         <div className="text-center py-16 text-zinc-400 text-sm">No hay objetivos registrados para este filtro.</div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map(item => {
-            const pct = avancePct(item.valorActual, item.meta);
-            return (
-              <button
-                key={item.id}
-                onClick={() => setSelected(item)}
-                className="w-full text-left bg-white border border-zinc-100 rounded-xl px-5 py-4 hover:border-[#C41230]/40 hover:shadow-sm transition-all"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${PROGRAMA_COLOR[item.programa] ?? "bg-zinc-100 text-zinc-600"}`}>{item.programa}</span>
-                      <span className="text-xs text-zinc-400">OI-{String(item.numero).padStart(3, "0")}</span>
-                      {item.clausula && <span className="text-xs text-zinc-400">· {item.clausula}</span>}
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ESTADO_COLOR[item.estado] ?? "bg-zinc-100 text-zinc-500"}`}>{item.estado}</span>
-                    </div>
-                    <p className="text-sm font-medium text-zinc-800 truncate">{item.objetivo}</p>
-                    <p className="text-xs text-zinc-500 mt-0.5 truncate">{item.indicador}</p>
-                  </div>
-                  {/* Mini semáforo */}
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <div className={`w-3 h-3 rounded-full ${semaforoColor(pct, item.estado)}`} />
-                    <span className="text-xs font-semibold text-zinc-700">{pct}%</span>
-                  </div>
+        <div className="space-y-4">
+          {familias.map((fam) => (
+            <div key={fam.objetivo} className="bg-white border border-zinc-100 rounded-xl overflow-hidden">
+              <div className="flex items-start justify-between gap-3 px-5 py-4 bg-zinc-50/60 border-b border-zinc-100">
+                <div className="min-w-0">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${PROGRAMA_COLOR[fam.programa] ?? "bg-zinc-100 text-zinc-600"}`}>{fam.programa}</span>
+                  <p className="text-sm font-semibold text-zinc-900 mt-1">{fam.objetivo}</p>
                 </div>
-                {/* Barra */}
-                <div className="mt-3 w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
-                  <div className={`h-1.5 rounded-full ${semaforoColor(pct, item.estado)}`} style={{ width: `${pct}%` }} />
-                </div>
-                <div className="flex justify-between text-xs text-zinc-400 mt-1">
-                  <span>Actual: {item.valorActual} {item.unidad}</span>
-                  <span>Meta: {item.meta} {item.unidad} · {item.frecuencia}</span>
-                </div>
-              </button>
-            );
-          })}
+                {isAdmin && (
+                  <button onClick={() => setNuevoIndicadorPara({ objetivo: fam.objetivo, programa: fam.programa })}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 hover:border-[#C41230] hover:text-[#C41230] shrink-0">
+                    + Indicador
+                  </button>
+                )}
+              </div>
+              <div className="divide-y divide-zinc-50">
+                {fam.items.map((item) => {
+                  const pct = avancePct(item.valorActual, item.meta);
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setSelected(item)}
+                      className="w-full text-left px-5 py-3.5 hover:bg-zinc-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <span className="text-xs text-zinc-400">OI-{String(item.numero).padStart(3, "0")}</span>
+                            {item.clausula && <span className="text-xs text-zinc-400">· {item.clausula}</span>}
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ESTADO_COLOR[item.estado] ?? "bg-zinc-100 text-zinc-500"}`}>{item.estado}</span>
+                            {item.planAccion.length > 0 && (
+                              <span className="text-xs text-zinc-400">· {item.planAccion.filter((p) => p.estado !== "Completado").length}/{item.planAccion.length} acciones pendientes</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-zinc-800 truncate">{item.indicador}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <div className={`w-3 h-3 rounded-full ${semaforoColor(pct, item.estado)}`} />
+                          <span className="text-xs font-semibold text-zinc-700">{pct}%</span>
+                        </div>
+                      </div>
+                      <div className="mt-2 w-full bg-zinc-100 rounded-full h-1.5 overflow-hidden">
+                        <div className={`h-1.5 rounded-full ${semaforoColor(pct, item.estado)}`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="flex justify-between text-xs text-zinc-400 mt-1">
+                        <span>Actual: {item.valorActual} {item.unidad}</span>
+                        <span>Meta: {item.meta} {item.unidad} · {item.frecuencia}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {showRegistro && <RegistroModal onClose={() => setShowRegistro(false)} onSaved={handleSaved} />}
+      {nuevoIndicadorPara && (
+        <RegistroModal
+          objetivoPrefill={nuevoIndicadorPara.objetivo}
+          programaPrefill={nuevoIndicadorPara.programa}
+          onClose={() => setNuevoIndicadorPara(null)}
+          onSaved={handleSaved}
+        />
+      )}
       {selected && <DetalleModal item={selected} isAdmin={isAdmin} onClose={() => setSelected(null)} onUpdated={handleUpdated} />}
     </div>
   );

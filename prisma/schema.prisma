@@ -770,6 +770,22 @@ model ObjetivoIndicador {
   createdBy    String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  planAccion   PlanAccionIndicador[]
+}
+
+model PlanAccionIndicador {
+  id           String    @id @default(cuid())
+  indicadorId  String
+  indicador    ObjetivoIndicador @relation(fields: [indicadorId], references: [id], onDelete: Cascade)
+  descripcion  String
+  responsable  String?
+  recursos     String?
+  fechaLimite  DateTime?
+  estado       String    @default("Pendiente") // Pendiente | En proceso | Completado
+  fechaCierre  DateTime?
+  createdBy    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model RiesgoOportunidad {

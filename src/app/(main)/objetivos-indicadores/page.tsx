@@ -9,6 +9,7 @@ export default async function ObjetivosIndicadoresPage() {
   const isAdmin = session?.isAdmin ?? false;
 
   const raw = await prisma.objetivoIndicador.findMany({
+    include: { planAccion: { orderBy: { createdAt: "desc" } } },
     orderBy: [{ programa: "asc" }, { numero: "asc" }],
   });
 
@@ -16,6 +17,13 @@ export default async function ObjetivosIndicadoresPage() {
     ...o,
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
+    planAccion: o.planAccion.map((p) => ({
+      ...p,
+      fechaLimite: p.fechaLimite?.toISOString() ?? null,
+      fechaCierre: p.fechaCierre?.toISOString() ?? null,
+      createdAt: p.createdAt.toISOString(),
+      updatedAt: p.updatedAt.toISOString(),
+    })),
   }));
 
   return <ObjetivosIndicadoresClient items={items} isAdmin={isAdmin} />;
