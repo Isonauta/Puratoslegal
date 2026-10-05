@@ -16,7 +16,7 @@ export default function ChatPage() {
               ← Volver al dashboard
             </Link>
             <h1 className="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-              Conversa con Isosafe Chile
+              Conversa con Levi
             </h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Asistente SIG de Puratos Chile — seguridad, medio ambiente, calidad y más

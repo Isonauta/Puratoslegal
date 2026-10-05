@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 
 type Message = {
   role: "user" | "assistant";
@@ -137,9 +138,9 @@ export function ChatWindow() {
           {messages.length === 0 && (
             <div className="space-y-6 text-center">
               <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                <div className="w-12 h-12 mx-auto rounded-xl bg-[#C41230] flex items-center justify-center text-white font-bold text-xl">P</div>
+                <Image src="/images/levi-mascot.png" alt="Levi" width={48} height={48} className="mx-auto rounded-xl" />
                 <p className="mt-3 font-medium text-zinc-800 dark:text-zinc-100">
-                  Hola, soy Isosafe Chile
+                  Hola, soy Levi
                 </p>
                 <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                   Tu asistente SIG — pregúntame sobre seguridad, medio ambiente, no conformidades, objetivos, capacitaciones o legislación de Puratos Chile.
