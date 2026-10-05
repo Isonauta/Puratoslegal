@@ -1,5 +1,7 @@
 import NearMissForm from "@/components/NearMissForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Reporte de Seguridad — Near Misses | Isosafe Chile",
 };
