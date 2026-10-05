@@ -6,9 +6,11 @@ import { usePathname } from "next/navigation";
 interface AppSidebarProps {
   userName?: string;
   isAdmin?: boolean;
+  isNearMissReviewer?: boolean;
   badges?: {
     noConformidadesAbiertas?: number;
     objetivosPct?: number;
+    nearMissAbiertos?: number;
   };
 }
 
@@ -28,7 +30,7 @@ interface NavSection {
   items: NavItem[];
 }
 
-function buildSections(badges: AppSidebarProps["badges"]): NavSection[] {
+function buildSections(badges: AppSidebarProps["badges"], isNearMissReviewer: boolean): NavSection[] {
 const sections: NavSection[] = [
   {
     label: "PRINCIPAL",
@@ -215,6 +217,19 @@ const sections: NavSection[] = [
         ),
         external: true,
       },
+      ...(isNearMissReviewer
+        ? [
+            {
+              href: "/near-miss-triage",
+              label: "Near Misses",
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                </svg>
+              ),
+            },
+          ]
+        : []),
     ],
   },
 ];
@@ -233,12 +248,19 @@ const sections: NavSection[] = [
       item.badgeColor = badges.objetivosPct >= 80 ? "success" : badges.objetivosPct >= 50 ? "warn" : "alert";
     }
   }
+  if (badges?.nearMissAbiertos !== undefined) {
+    const item = sections.flatMap((s) => s.items).find((i) => i.href === "/near-miss-triage");
+    if (item && badges.nearMissAbiertos > 0) {
+      item.badge = String(badges.nearMissAbiertos);
+      item.badgeColor = "alert";
+    }
+  }
 
   return sections;
 }
 
-export default function AppSidebar({ userName, isAdmin, badges }: AppSidebarProps) {
-  const sections = buildSections(badges);
+export default function AppSidebar({ userName, isAdmin, isNearMissReviewer, badges }: AppSidebarProps) {
+  const sections = buildSections(badges, isNearMissReviewer ?? false);
   const pathname = usePathname();
 
   function isActive(href: string, exact?: boolean) {
@@ -256,7 +278,7 @@ export default function AppSidebar({ userName, isAdmin, badges }: AppSidebarProp
       {/* Brand */}
       <div className="px-4 py-5 border-b border-zinc-100 dark:border-zinc-800">
         <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
-          Pura<span className="text-[#C41230]">safe</span>
+          Isosafe<span className="text-[#C41230]"> Chile</span>
         </span>
         <p className="text-[10px] text-zinc-400 mt-0.5 uppercase tracking-widest">Sistema de Gestión</p>
       </div>

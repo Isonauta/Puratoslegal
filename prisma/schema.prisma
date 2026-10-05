@@ -903,6 +903,31 @@ model NoConformidad {
   updatedAt      DateTime @updatedAt
 }
 
+// Reporte público de "Near Miss" (casi-accidente) vía QR — enviado por
+// cualquier persona sin sesión en la plataforma. Entra en estado Pendiente
+// y pasa por triage exclusivo de los encargados SIG (ver NEAR_MISS_REVIEWERS
+// en src/lib/nearMiss.ts).
+model NearMiss {
+  id               String    @id @default(cuid())
+  numero           Int       @default(autoincrement())
+  fecha            DateTime
+  nombreReporta    String
+  areaReporta      String
+  titulo           String
+  descripcion      String
+  consecuencia     String    // Riesgo Potencial Personal y Daño de Infraestructura | ...y Sin Daño de Infraestructura
+  medidaInmediata  Boolean
+  estado           String    @default("Pendiente") // Pendiente | En triage | Cerrado
+  prioridad        String?   // Alta | Media | Baja — asignada en el triage
+  triagePor        String?   // email del encargado que lo tomó
+  triageComentario String?
+  triageFecha      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([estado])
+}
+
 model Siniestro {
   idSiniestro              String   @id
   nombreUsuario            String

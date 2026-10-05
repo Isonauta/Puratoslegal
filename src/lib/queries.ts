@@ -334,3 +334,11 @@ export async function getNoConformidadesSummary() {
   const abiertasTotal = abiertas + enRevision + enCorreccion;
   return { total, abiertas, enRevision, enCorreccion, cerradas, vencidas, abiertasTotal };
 }
+
+export async function getNearMissSummary() {
+  const [pendientes, enTriage] = await Promise.all([
+    prisma.nearMiss.count({ where: { estado: "Pendiente" } }),
+    prisma.nearMiss.count({ where: { estado: "En triage" } }),
+  ]);
+  return { pendientes, enTriage, abiertosTotal: pendientes + enTriage };
+}

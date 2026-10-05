@@ -15,14 +15,17 @@ import {
   getDiasSinAccidentes,
   getObjetivosIndicadoresSummary,
   getNoConformidadesSummary,
+  getNearMissSummary,
 } from "@/lib/queries";
 import { AccidentBanner } from "@/components/AccidentBanner";
+import { isNearMissReviewer } from "@/lib/nearMiss";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks, sigStats, accidentes, objSummary, ncSummary] = await Promise.all([
+  const isReviewer = isNearMissReviewer(session?.email);
+  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks, sigStats, accidentes, objSummary, ncSummary, nearMissSummary] = await Promise.all([
     getComplianceByAmbito(),
     getOverallCompliance(),
     getNonCompliantRequirements(),
@@ -35,6 +38,7 @@ export default async function DashboardPage() {
     getDiasSinAccidentes(),
     getObjetivosIndicadoresSummary(),
     getNoConformidadesSummary(),
+    isReviewer ? getNearMissSummary() : Promise.resolve(null),
   ]);
 
   return (
@@ -52,6 +56,27 @@ export default async function DashboardPage() {
             areas={accidentes.areas}
             isAdmin={session?.isAdmin ?? false}
           />
+        )}
+
+        {/* Near Miss — visible solo para el equipo de triage asignado */}
+        {isReviewer && nearMissSummary && nearMissSummary.abiertosTotal > 0 && (
+          <Link
+            href="/near-miss-triage"
+            className="flex items-center justify-between gap-4 rounded-lg border border-amber-300 bg-amber-50 p-4 shadow-sm hover:border-amber-400 hover:shadow-md transition-all dark:border-amber-900/50 dark:bg-amber-950/30"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-400 text-white text-lg font-bold">!</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                  {nearMissSummary.pendientes > 0
+                    ? `${nearMissSummary.pendientes} Near Miss${nearMissSummary.pendientes > 1 ? "es" : ""} pendiente${nearMissSummary.pendientes > 1 ? "s" : ""} de triage`
+                    : `${nearMissSummary.enTriage} Near Miss en triage`}
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-400">Reportes recibidos vía QR de planta — solo visible para tu equipo</p>
+              </div>
+            </div>
+            <span className="text-2xl font-bold text-amber-700 dark:text-amber-400 shrink-0">{nearMissSummary.abiertosTotal}</span>
+          </Link>
         )}
 
         {/* Indicadores de gestión — objetivos y no conformidades, visibilidad gerencial de entrada */}
