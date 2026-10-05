@@ -6,6 +6,10 @@ import { usePathname } from "next/navigation";
 interface AppSidebarProps {
   userName?: string;
   isAdmin?: boolean;
+  badges?: {
+    noConformidadesAbiertas?: number;
+    objetivosPct?: number;
+  };
 }
 
 interface NavItem {
@@ -14,6 +18,7 @@ interface NavItem {
   icon: React.ReactNode;
   exact?: boolean;
   badge?: string;
+  badgeColor?: "default" | "alert" | "success" | "warn";
   soon?: boolean;
   external?: boolean;
 }
@@ -23,6 +28,7 @@ interface NavSection {
   items: NavItem[];
 }
 
+function buildSections(badges: AppSidebarProps["badges"]): NavSection[] {
 const sections: NavSection[] = [
   {
     label: "PRINCIPAL",
@@ -213,7 +219,26 @@ const sections: NavSection[] = [
   },
 ];
 
-export default function AppSidebar({ userName, isAdmin }: AppSidebarProps) {
+  if (badges?.noConformidadesAbiertas !== undefined) {
+    const item = sections.flatMap((s) => s.items).find((i) => i.href === "/no-conformidades");
+    if (item && badges.noConformidadesAbiertas > 0) {
+      item.badge = String(badges.noConformidadesAbiertas);
+      item.badgeColor = "alert";
+    }
+  }
+  if (badges?.objetivosPct !== undefined) {
+    const item = sections.flatMap((s) => s.items).find((i) => i.href === "/objetivos-indicadores");
+    if (item) {
+      item.badge = `${badges.objetivosPct}%`;
+      item.badgeColor = badges.objetivosPct >= 80 ? "success" : badges.objetivosPct >= 50 ? "warn" : "alert";
+    }
+  }
+
+  return sections;
+}
+
+export default function AppSidebar({ userName, isAdmin, badges }: AppSidebarProps) {
+  const sections = buildSections(badges);
   const pathname = usePathname();
 
   function isActive(href: string, exact?: boolean) {
@@ -261,7 +286,17 @@ export default function AppSidebar({ userName, isAdmin }: AppSidebarProps) {
                       </span>
                       <span className="flex-1 truncate">{item.label}</span>
                       {item.badge && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${active ? "bg-white/20 text-white" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"}`}>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                          active
+                            ? "bg-white/20 text-white"
+                            : item.badgeColor === "alert"
+                              ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400"
+                              : item.badgeColor === "warn"
+                                ? "bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400"
+                                : item.badgeColor === "success"
+                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400"
+                                  : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                        }`}>
                           {item.badge}
                         </span>
                       )}

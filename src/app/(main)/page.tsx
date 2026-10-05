@@ -13,6 +13,8 @@ import {
   getTasksByResponsable,
   getDocumentosSigStats,
   getDiasSinAccidentes,
+  getObjetivosIndicadoresSummary,
+  getNoConformidadesSummary,
 } from "@/lib/queries";
 import { AccidentBanner } from "@/components/AccidentBanner";
 
@@ -20,7 +22,7 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks, sigStats, accidentes] = await Promise.all([
+  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks, sigStats, accidentes, objSummary, ncSummary] = await Promise.all([
     getComplianceByAmbito(),
     getOverallCompliance(),
     getNonCompliantRequirements(),
@@ -31,6 +33,8 @@ export default async function DashboardPage() {
     session?.responsable ? getTasksByResponsable(session.responsable) : Promise.resolve(null),
     getDocumentosSigStats(),
     getDiasSinAccidentes(),
+    getObjetivosIndicadoresSummary(),
+    getNoConformidadesSummary(),
   ]);
 
   return (
@@ -49,6 +53,62 @@ export default async function DashboardPage() {
             isAdmin={session?.isAdmin ?? false}
           />
         )}
+
+        {/* Indicadores de gestión — objetivos y no conformidades, visibilidad gerencial de entrada */}
+        <section>
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Indicadores de gestión
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Link href="/objetivos-indicadores" className="block rounded-lg border border-zinc-200 bg-white p-5 shadow-sm hover:border-[#C41230]/40 hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Objetivos e Indicadores · {objSummary.anio}</p>
+                  <p className="mt-1 text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+                    {objSummary.pctCumplimiento}%
+                    <span className="ml-1 text-base font-normal text-zinc-400">cumplimiento</span>
+                  </p>
+                </div>
+                <span className={`text-2xl font-bold shrink-0 ${objSummary.pctCumplimiento >= 80 ? "text-emerald-500" : objSummary.pctCumplimiento >= 50 ? "text-amber-500" : "text-red-500"}`}>
+                  ●
+                </span>
+              </div>
+              <div className="mt-3 h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <div
+                  className={`h-1.5 rounded-full ${objSummary.pctCumplimiento >= 80 ? "bg-emerald-500" : objSummary.pctCumplimiento >= 50 ? "bg-amber-400" : "bg-red-400"}`}
+                  style={{ width: `${objSummary.pctCumplimiento}%` }}
+                />
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                <div><span className="text-emerald-700 dark:text-emerald-400 font-semibold">{objSummary.logrados}</span><span className="text-zinc-400"> logrados</span></div>
+                <div><span className="text-blue-700 dark:text-blue-400 font-semibold">{objSummary.enCurso}</span><span className="text-zinc-400"> en curso</span></div>
+                <div><span className="text-red-700 dark:text-red-400 font-semibold">{objSummary.noLogrados}</span><span className="text-zinc-400"> no logrados</span></div>
+              </div>
+            </Link>
+
+            <Link href="/no-conformidades" className="block rounded-lg border border-zinc-200 bg-white p-5 shadow-sm hover:border-[#C41230]/40 hover:shadow-md transition-all dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">No Conformidades</p>
+                  <p className="mt-1 text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+                    {ncSummary.abiertasTotal}
+                    <span className="ml-1 text-base font-normal text-zinc-400">abiertas de {ncSummary.total}</span>
+                  </p>
+                </div>
+                {ncSummary.vencidas > 0 && (
+                  <span className="shrink-0 text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400">
+                    {ncSummary.vencidas} vencida{ncSummary.vencidas > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                <div><span className="text-red-700 dark:text-red-400 font-semibold">{ncSummary.abiertas}</span><span className="text-zinc-400"> abiertas</span></div>
+                <div><span className="text-amber-700 dark:text-amber-400 font-semibold">{ncSummary.enRevision + ncSummary.enCorreccion}</span><span className="text-zinc-400"> en proceso</span></div>
+                <div><span className="text-emerald-700 dark:text-emerald-400 font-semibold">{ncSummary.cerradas}</span><span className="text-zinc-400"> cerradas</span></div>
+              </div>
+            </Link>
+          </div>
+        </section>
 
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">

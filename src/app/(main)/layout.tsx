@@ -1,14 +1,27 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import AppSidebar from "@/components/AppSidebar";
+import { getNoConformidadesSummary, getObjetivosIndicadoresSummary } from "@/lib/queries";
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login?from=/");
 
+  const [ncSummary, objSummary] = await Promise.all([
+    getNoConformidadesSummary(),
+    getObjetivosIndicadoresSummary(),
+  ]);
+
   return (
     <div className="flex min-h-screen bg-zinc-50 dark:bg-black">
-      <AppSidebar userName={session.name ?? session.email} isAdmin={session.isAdmin} />
+      <AppSidebar
+        userName={session.name ?? session.email}
+        isAdmin={session.isAdmin}
+        badges={{
+          noConformidadesAbiertas: ncSummary.abiertasTotal,
+          objetivosPct: objSummary.pctCumplimiento,
+        }}
+      />
       <div className="flex-1 min-w-0">
         {children}
       </div>

@@ -308,3 +308,29 @@ export async function getCalendarEvents() {
   ]);
   return { plans, permits };
 }
+
+export async function getObjetivosIndicadoresSummary() {
+  const anio = new Date().getFullYear();
+  const items = await prisma.objetivoIndicador.findMany({ where: { anio } });
+  const total = items.length;
+  const logrados = items.filter((i) => i.estado === "Logrado").length;
+  const enCurso = items.filter((i) => i.estado === "En curso").length;
+  const noLogrados = items.filter((i) => i.estado === "No logrado").length;
+  const suspendidos = items.filter((i) => i.estado === "Suspendido").length;
+  const pctCumplimiento = total > 0 ? Math.round((logrados / total) * 100) : 0;
+  return { anio, total, logrados, enCurso, noLogrados, suspendidos, pctCumplimiento };
+}
+
+export async function getNoConformidadesSummary() {
+  const now = new Date();
+  const [total, abiertas, enRevision, enCorreccion, cerradas, vencidas] = await Promise.all([
+    prisma.noConformidad.count(),
+    prisma.noConformidad.count({ where: { estado: "Abierta" } }),
+    prisma.noConformidad.count({ where: { estado: "En revisión" } }),
+    prisma.noConformidad.count({ where: { estado: "En corrección" } }),
+    prisma.noConformidad.count({ where: { estado: "Cerrada" } }),
+    prisma.noConformidad.count({ where: { estado: { not: "Cerrada" }, fechaLimite: { lt: now } } }),
+  ]);
+  const abiertasTotal = abiertas + enRevision + enCorreccion;
+  return { total, abiertas, enRevision, enCorreccion, cerradas, vencidas, abiertasTotal };
+}
