@@ -92,7 +92,7 @@ export default async function PermitDetailPage({ params }: { params: Promise<{ i
             <p className="text-sm text-gray-600">{permit.taskDescription}</p>
           </div>
           <div className="text-right text-xs text-gray-500">
-            <p>Purasafe — Cumplimiento Legal</p>
+            <p>Isosafe Chile — Cumplimiento Legal</p>
             <p>{permit.date ? new Date(permit.date).toLocaleDateString("es-CL") : ""}</p>
             <p className="mt-1 font-medium">{PERMIT_STATUS_LABELS[permit.status] ?? permit.status}</p>
           </div>

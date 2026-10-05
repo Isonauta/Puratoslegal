@@ -23,7 +23,7 @@ export default function DashboardHero({ name, overallPct }: DashboardHeroProps) 
         <h2 className="text-2xl font-bold leading-tight">
           Sistema de Gestión
           <br />
-          <span className="text-red-200">Purasafe</span>
+          <span className="text-red-200">Isosafe Chile</span>
         </h2>
         <p className="text-red-200 text-sm mt-2 max-w-sm">
           Cumplimiento legal · Documentación · Permisos de trabajo · Formación continua.

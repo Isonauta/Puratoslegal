@@ -485,7 +485,7 @@ export default function EstrategiaRiesgosClient({ items: initial, isAdmin }: { i
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Riesgos y Oportunidades");
-    XLSX.writeFile(wb, `Purasafe_Estrategia_Riesgos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `IsosafeChile_Estrategia_Riesgos_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   return (

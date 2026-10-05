@@ -32,7 +32,7 @@ export default function NoticiasAccesoPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-600 mb-4">
             <span className="text-white text-2xl font-bold">P</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">PuraSafe te informa</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Isosafe Chile te informa</h1>
           <p className="text-gray-500 mt-1 text-sm">Ingresa la clave para acceder</p>
         </div>
 

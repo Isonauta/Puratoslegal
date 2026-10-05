@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
 
-const SYSTEM_PROMPT = `Eres Purasafe, el asistente IA del Sistema de Gestión Integrado (SIG) de Puratos Chile — empresa del sector alimentario (ingredientes para panificación, pastelería y chocolate) con operaciones en Santiago.
+const SYSTEM_PROMPT = `Eres Isosafe Chile, el asistente IA del Sistema de Gestión Integrado (SIG) de Puratos Chile — empresa del sector alimentario (ingredientes para panificación, pastelería y chocolate) con operaciones en Santiago.
 
 Ayudas al equipo de Puratos con todo lo relacionado al SIG: seguridad y salud en el trabajo (SST), medio ambiente (MA), calidad, no conformidades, auditorías internas, capacitación, objetivos e indicadores, requisitos legales, permisos de trabajo, planes de acción y accidentabilidad DS67.
 
@@ -125,7 +125,7 @@ async function fetchContext(question: string): Promise<string> {
   }
 
   if (parts.length === 0) return "";
-  return "\n\n---\n**DATOS DEL SISTEMA PURASAFE:**\n\n" + parts.join("\n\n") + "\n---";
+  return "\n\n---\n**DATOS DEL SISTEMA ISOSAFE CHILE:**\n\n" + parts.join("\n\n") + "\n---";
 }
 
 export async function POST(req: NextRequest) {

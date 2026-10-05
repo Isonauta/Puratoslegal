@@ -186,7 +186,7 @@ function LoginForm() {
             </form>
 
             <p className="mt-8 text-center text-xs text-zinc-300">
-              Purasafe · {new Date().getFullYear()} · Puratos Chile
+              Isosafe Chile · {new Date().getFullYear()} · Puratos Chile
             </p>
           </div>
         </div>

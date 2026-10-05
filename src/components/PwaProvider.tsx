@@ -90,7 +90,7 @@ export default function PwaProvider() {
             <span className="text-white font-bold text-lg">P</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-zinc-900">Instalar Purasafe PTS</p>
+            <p className="text-sm font-semibold text-zinc-900">Instalar Isosafe Chile PTS</p>
             <p className="text-xs text-zinc-500">Úsalo en terreno sin navegador</p>
           </div>
           <div className="flex gap-2 shrink-0">

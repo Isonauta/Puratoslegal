@@ -20,7 +20,7 @@ export default function PtsNavBar({ userName, userRole }: NavBarProps) {
       <div className="px-4 py-3 flex items-center justify-between max-w-5xl mx-auto">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-white/70 hover:text-white text-sm">
-            ← Purasafe
+            ← Isosafe Chile
           </Link>
           <span className="text-white/40">|</span>
           <Link href="/pts" className="font-bold text-lg tracking-wide">

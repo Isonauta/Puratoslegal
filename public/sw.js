@@ -1,4 +1,4 @@
-// Service Worker — Purasafe PTS
+// Service Worker — Isosafe Chile PTS
 // Estrategia: cache-first para assets estáticos, network-first para páginas,
 // cola IndexedDB para POSTs offline.
 

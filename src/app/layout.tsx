@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Purasafe — Cumplimiento Legal",
+  title: "Isosafe Chile — Cumplimiento Legal",
   description: "Plataforma de cumplimiento legal y evidencia documental",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Purasafe PTS",
+    title: "Isosafe Chile PTS",
   },
   other: {
     "mobile-web-app-capable": "yes",

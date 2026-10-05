@@ -198,7 +198,7 @@ export default function IncidentesClient({ initialItems, isAdmin }: Props) {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Siniestros");
-    XLSX.writeFile(wb, `Purasafe_Siniestros_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `IsosafeChile_Siniestros_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 
   return (
