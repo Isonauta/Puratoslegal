@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LeviMascot from "./LeviMascot";
 
 interface DashboardHeroProps {
   name: string;
@@ -49,6 +50,11 @@ export default function DashboardHero({ name, overallPct }: DashboardHeroProps) 
             ✦ Consulta IA
           </Link>
         </div>
+      </div>
+
+      {/* Levi: bienvenida animada */}
+      <div className="hidden sm:block shrink-0" style={{ width: 170, aspectRatio: "620 / 480" }}>
+        <LeviMascot />
       </div>
 
       {/* Right: compliance ring */}
