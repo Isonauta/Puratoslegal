@@ -100,7 +100,7 @@ function LoginForm() {
             <span className="text-white font-bold text-sm">P</span>
           </div>
           <div>
-            <span className="text-white font-bold text-lg leading-none">Pura<span className="opacity-80">safe</span></span>
+            <span className="text-white font-bold text-lg leading-none">Isosafe<span className="opacity-80"> Chile</span></span>
             <p className="text-white/60 text-[10px] uppercase tracking-widest leading-none mt-0.5">Puratos Chile</p>
           </div>
         </div>
