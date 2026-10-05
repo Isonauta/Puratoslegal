@@ -5,6 +5,7 @@ export const NEAR_MISS_REVIEWERS = [
   "scorroteaortiz@puratos.com", // Sebastián Corrotea
   "bhenriquez@puratos.com",     // Benjamín Henriquez
   "cneumannlatorre@puratos.com",// Carlos Neumann
+  "cristian@cristiancordero.cl",// Cristián Cordero (admin de la plataforma)
 ];
 
 export function isNearMissReviewer(email?: string | null): boolean {
