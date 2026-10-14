@@ -57,15 +57,15 @@ export async function POST(req: NextRequest) {
   if (!items || items.length === 0) {
     return NextResponse.json({ error: "No hay ítems FODA pendientes de promover." }, { status: 400 });
   }
-  if (items.length > 15) {
-    return NextResponse.json({ error: "Son demasiados ítems para una sola pasada (máx. 15). Promueve en tandas más chicas." }, { status: 400 });
+  if (items.length > 10) {
+    return NextResponse.json({ error: "Son demasiados ítems para una sola pasada (máx. 10). Promueve en tandas más chicas." }, { status: 400 });
   }
 
   let raw: string;
   try {
     const msg = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt(items) }],
     });

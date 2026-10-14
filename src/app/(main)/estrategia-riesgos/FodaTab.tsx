@@ -390,7 +390,7 @@ export default function FodaTab({ items: initial, pestel, isAdmin, onChanged, on
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        items: pendientes.slice(0, 15).map((f) => ({ fodaId: f.id, cuadrante: f.cuadrante, sistema: f.sistema, cuestion: f.cuestion, descripcion: f.descripcion })),
+        items: pendientes.slice(0, 10).map((f) => ({ fodaId: f.id, cuadrante: f.cuadrante, sistema: f.sistema, cuestion: f.cuestion, descripcion: f.descripcion })),
       }),
     });
     if (res.ok) {
@@ -436,7 +436,7 @@ export default function FodaTab({ items: initial, pestel, isAdmin, onChanged, on
             {pendientes.length > 0 && (
               <button onClick={handleGenerarRiesgos} disabled={generandoRiesgos}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-[#C41230] hover:bg-[#a00e26] disabled:opacity-60">
-                <span className="text-base leading-none">✦</span> {generandoRiesgos ? "Generando…" : `Promover ${Math.min(pendientes.length, 15)} pendientes con IA`}
+                <span className="text-base leading-none">✦</span> {generandoRiesgos ? "Generando…" : `Promover ${Math.min(pendientes.length, 10)} pendientes con IA`}
               </button>
             )}
             <button onClick={() => setShowNuevo(true)} className="px-4 py-2 text-sm border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600">
