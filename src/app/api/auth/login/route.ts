@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     email: user.email,
     name: user.name,
     responsable: user.responsable ?? null,
-    isAdmin: "isAdmin" in user ? user.isAdmin : user.role === "ADMIN",
+    isAdmin: user.isAdmin,
     role: "role" in user ? (user.role as string | null) : null,
     companyId: "companyId" in user ? (user.companyId as string | null) : null,
   });

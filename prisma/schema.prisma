@@ -433,6 +433,12 @@ model User {
   name         String
   rut          String?
   role         UserRole @default(ADMIN)
+  // Admin del SIG general (distinto de `role`, que es el permiso de PTS) y
+  // nombre usado para filtrar "Mis tareas" por responsable asignado —
+  // mismos campos que ya existían para los usuarios hardcodeados en
+  // LEGACY_USERS (src/lib/auth.ts), ahora en la tabla real.
+  isAdmin      Boolean  @default(false)
+  responsable  String?
   companyId    String?
   company      Company? @relation(fields: [companyId], references: [id])
   createdAt    DateTime @default(now())

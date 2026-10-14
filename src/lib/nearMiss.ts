@@ -2,10 +2,10 @@
 // El triage queda restringido a este grupo puntual de encargados SIG — el
 // resto de usuarios autenticados no ve esta información (pedido explícito).
 export const NEAR_MISS_REVIEWERS = [
-  "scorroteaortiz@puratos.com", // Sebastián Corrotea
-  "bhenriquez@puratos.com",     // Benjamín Henriquez
-  "cneumannlatorre@puratos.com",// Carlos Neumann
-  "cristian@cristiancordero.cl",// Cristián Cordero (admin de la plataforma)
+  "sebastian.corrotea@puratos.com", // Sebastián Corrotea
+  "benjamin.henriquez@puratos.com", // Benjamín Henriquez
+  "carlos.neumann@puratos.com",     // Carlos Neumann
+  "cristian@cristiancordero.cl",    // Cristián Cordero (admin de la plataforma)
 ];
 
 export function isNearMissReviewer(email?: string | null): boolean {

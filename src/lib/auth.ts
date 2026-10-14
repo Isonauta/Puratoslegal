@@ -17,7 +17,11 @@ export type SessionUser = {
   companyId: string | null;
 };
 
-// Hardcoded fallback users (Legal module — kept for backward compatibility)
+// Hardcoded fallback users (kept for backward compatibility). Las cuentas
+// de Puratos (Sebastián, Benjamín, Carlos) viven en la tabla real `User`
+// — ver findUser() — para que ningún hash de contraseña quede en el
+// código fuente del repo. Esta lista queda solo para el admin de
+// plataforma, que no rota por el mismo proceso de onboarding.
 const LEGACY_USERS: {
   email: string;
   name: string;
@@ -25,27 +29,6 @@ const LEGACY_USERS: {
   isAdmin: boolean;
   hash: string;
 }[] = [
-  {
-    email: "scorroteaortiz@puratos.com",
-    name: "Sebastián Corrotea",
-    responsable: "Sebastián Corrotea",
-    isAdmin: false,
-    hash: "$2b$12$xV04JpC3KjQmDM3PgKHlIuMBMdqi4jo5t68PBPXNvygkRGP4UHViq",
-  },
-  {
-    email: "bhenriquez@puratos.com",
-    name: "Benjamín Henriquez",
-    responsable: "Benjamín Henriquez",
-    isAdmin: false,
-    hash: "$2b$12$/nyNqF2z.AOJYOIzjMEw0uiasCJDrXtpWzeVdiLCTDkRYVA/oS1/C",
-  },
-  {
-    email: "cneumannlatorre@puratos.com",
-    name: "Carlos Neumann",
-    responsable: null,
-    isAdmin: true,
-    hash: "$2b$12$jhavcaiMv3wsfCKOFaoqT.w2HrSQglKm4p8U27mpNnxlwfDfCftY.",
-  },
   {
     email: "cristian@cristiancordero.cl",
     name: "Cristián Cordero",
@@ -59,10 +42,10 @@ const LEGACY_USERS: {
 export async function findUser(email: string) {
   const normalized = email.toLowerCase();
 
-  // Try DB user (PTS users and migrated Legal users)
+  // Try DB user (PTS users y cuentas de Puratos migradas desde LEGACY_USERS)
   try {
     const dbUser = await prisma.user.findUnique({ where: { email: normalized } });
-    if (dbUser) return { ...dbUser, responsable: null, isLegacy: false };
+    if (dbUser) return { ...dbUser, isLegacy: false };
   } catch {
     // DB not ready yet — fall through to legacy
   }
