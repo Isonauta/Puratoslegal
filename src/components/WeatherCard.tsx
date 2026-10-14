@@ -1,7 +1,10 @@
 import type { WeatherNow } from "@/lib/weather";
 
 export function WeatherCard({ weather }: { weather: WeatherNow }) {
-  const hayAlerta = weather.alertas.tempAlta || weather.alertas.uvAlto || weather.alertas.lluvia;
+  const { alertas } = weather;
+  const uvRequiereProteccion = alertas.uvAlto || alertas.uvPorHorarioEstacional;
+  const hayAlerta =
+    alertas.tempAlta || alertas.tempFria || uvRequiereProteccion || alertas.lluvia || alertas.vientoFuerte || alertas.condicionSevera;
 
   return (
     <div
@@ -18,33 +21,50 @@ export function WeatherCard({ weather }: { weather: WeatherNow }) {
             Clima — Santiago
           </p>
         </div>
-        {hayAlerta && (
-          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-            Condición que puede afectar la operación
-          </span>
-        )}
+        <span className="text-xs text-zinc-400">{weather.condicion}</span>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-3">
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Metric
           label="Temperatura"
           value={`${Math.round(weather.tempC)}°`}
           sub={`máx. hoy ${Math.round(weather.tempMaxHoyC)}°`}
-          alert={weather.alertas.tempAlta}
+          alert={alertas.tempAlta || alertas.tempFria}
         />
         <Metric
           label="Índice UV"
           value={String(Math.round(weather.uvIndex))}
           sub={uvLabel(weather.uvIndex)}
-          alert={weather.alertas.uvAlto}
+          alert={uvRequiereProteccion}
         />
         <Metric
           label="Lluvia"
           value={`${Math.round(weather.precipProbPct)}%`}
           sub={weather.precipMm > 0 ? `${weather.precipMm.toFixed(1)} mm ahora` : "prob. hoy"}
-          alert={weather.alertas.lluvia}
+          alert={alertas.lluvia}
+        />
+        <Metric
+          label="Viento"
+          value={`${Math.round(weather.windKmh)}`}
+          sub="km/h"
+          alert={alertas.vientoFuerte}
         />
       </div>
+
+      {hayAlerta && (
+        <ul className="mt-3 space-y-1 border-t border-amber-200 pt-2 text-xs text-amber-800 dark:border-amber-900/50 dark:text-amber-300">
+          {alertas.tempFria && <li>• Frío: temperatura ≤10°C — evaluar exposición, ropa adecuada y descansos en zonas temperadas.</li>}
+          {alertas.tempAlta && <li>• Temperatura alta — seguimiento de exposición al calor según tarea.</li>}
+          {uvRequiereProteccion && <li>• Radiación UV: activar protección solar (no implica suspender el trabajo).</li>}
+          {alertas.lluvia && <li>• Probabilidad alta de lluvia — considerar en tareas a la intemperie.</li>}
+          {alertas.vientoFuerte && <li>• Viento fuerte — revisar criterios por tarea (grúas, altura, andamios).</li>}
+          {alertas.condicionSevera && <li>• Condición severa en curso ({weather.condicion}) — evaluar riesgo grave e inminente si corresponde.</li>}
+        </ul>
+      )}
+
+      <p className="mt-3 text-[11px] leading-snug text-zinc-400">
+        Referencia meteorológica (Open-Meteo), no reemplaza la medición de TGBH en terreno ni las alertas oficiales DMC/SENAPRED.
+      </p>
     </div>
   );
 }
