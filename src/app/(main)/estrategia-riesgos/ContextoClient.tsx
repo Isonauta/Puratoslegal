@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import EstrategiaRiesgosClient from "./EstrategiaRiesgosClient";
 import PestelTab, { type Pestel } from "./PestelTab";
 import FodaTab, { type Foda } from "./FodaTab";
+import CameTab, { type Came } from "./CameTab";
 import ContextoTab, { type Contexto } from "./ContextoTab";
 import PartesInteresadasTab, { type ParteInteresada } from "./PartesInteresadasTab";
 import CambioClimaticoTab, { type Determinacion } from "./CambioClimaticoTab";
@@ -11,15 +12,16 @@ import ImportarContextoModal from "./ImportarContextoModal";
 
 type RO = Parameters<typeof EstrategiaRiesgosClient>[0]["items"][number];
 
-const TABS = ["Contexto", "Partes Interesadas", "Cambio Climático", "PESTEL", "FODA", "Matriz de riesgos"] as const;
+const TABS = ["Contexto", "Partes Interesadas", "Cambio Climático", "PESTEL", "FODA", "CAME", "Matriz de riesgos"] as const;
 
-export default function ContextoClient({ riesgos, pestel, foda, partesInteresadas, contexto: contextoInicial, climatica, isAdmin }: {
-  riesgos: RO[]; pestel: Pestel[]; foda: Foda[]; partesInteresadas: ParteInteresada[]; contexto: Contexto; climatica: Determinacion[]; isAdmin: boolean;
+export default function ContextoClient({ riesgos, pestel, foda, came, partesInteresadas, contexto: contextoInicial, climatica, isAdmin }: {
+  riesgos: RO[]; pestel: Pestel[]; foda: Foda[]; came: Came[]; partesInteresadas: ParteInteresada[]; contexto: Contexto; climatica: Determinacion[]; isAdmin: boolean;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Contexto");
   const [contexto, setContexto] = useState(contextoInicial);
   const [pestelItems, setPestelItems] = useState(pestel);
   const [fodaItems, setFodaItems] = useState(foda);
+  const [cameItems, setCameItems] = useState(came);
   const [partesItems, setPartesItems] = useState(partesInteresadas);
   const [climaticaItems, setClimaticaItems] = useState(climatica);
   const [showImportar, setShowImportar] = useState(false);
@@ -27,6 +29,10 @@ export default function ContextoClient({ riesgos, pestel, foda, partesInteresada
   const fodaOrigenIds = useMemo(
     () => new Set(fodaItems.filter((f) => f.origenPestelId).map((f) => f.origenPestelId as string)),
     [fodaItems]
+  );
+  const riesgoOrigenIds = useMemo(
+    () => new Set(riesgos.filter((r) => r.origenFodaId).map((r) => r.origenFodaId as string)),
+    [riesgos]
   );
 
   return (
@@ -79,7 +85,12 @@ export default function ContextoClient({ riesgos, pestel, foda, partesInteresada
           isAdmin={isAdmin}
           onChanged={setFodaItems}
           onRiesgoCreado={() => window.location.reload()}
+          riesgoOrigenIds={riesgoOrigenIds}
         />
+      )}
+
+      {tab === "CAME" && (
+        <CameTab items={cameItems} foda={fodaItems} isAdmin={isAdmin} onChanged={setCameItems} />
       )}
 
       {tab === "Matriz de riesgos" && (

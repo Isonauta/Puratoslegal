@@ -29,6 +29,41 @@ export async function POST(req: NextRequest) {
   if (!session?.isAdmin) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const body = await req.json();
+
+  if (Array.isArray(body.bulk)) {
+    const rows = body.bulk as Array<Record<string, unknown>>;
+    for (const r of rows) {
+      if (!r.proceso || !r.descripcion || !r.probabilidad || !r.impacto) {
+        return NextResponse.json({ error: "Fila con campos obligatorios faltantes" }, { status: 400 });
+      }
+    }
+    const result = await prisma.riesgoOportunidad.createMany({
+      data: rows.map((r) => {
+        const p = parseInt(String(r.probabilidad));
+        const i = parseInt(String(r.impacto));
+        const nivelRiesgo = p * i;
+        return {
+          tipo: r.tipo ? String(r.tipo) : "Riesgo",
+          programa: r.programa ? String(r.programa) : "SST",
+          proceso: String(r.proceso),
+          descripcion: String(r.descripcion),
+          causas: r.causas ? String(r.causas) : null,
+          consecuencias: r.consecuencias ? String(r.consecuencias) : null,
+          probabilidad: p,
+          impacto: i,
+          nivelRiesgo,
+          clasificacion: clasificar(nivelRiesgo),
+          tratamiento: r.tratamiento ? String(r.tratamiento) : "Mitigar",
+          accionControl: r.accionControl ? String(r.accionControl) : null,
+          responsable: r.responsable ? String(r.responsable) : null,
+          origenFodaId: r.origenFodaId ? String(r.origenFodaId) : null,
+          createdBy: session.email ?? null,
+        };
+      }),
+    });
+    return NextResponse.json({ count: result.count }, { status: 201 });
+  }
+
   const {
     tipo, programa, proceso, descripcion, causas, consecuencias,
     probabilidad, impacto, tratamiento, accionControl, responsable, fechaRevision, origenFodaId,

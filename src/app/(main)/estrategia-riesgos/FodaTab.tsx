@@ -255,8 +255,120 @@ function PromoverModal({ item, onClose, onPromoted }: { item: Foda; onClose: () 
   );
 }
 
-export default function FodaTab({ items: initial, pestel, isAdmin, onChanged, onRiesgoCreado }: {
+interface GeneradoRiesgo {
+  origenFodaId: string; tipo: string; programa: string; proceso: string; descripcion: string;
+  causas: string | null; consecuencias: string | null; probabilidad: number; impacto: number;
+  tratamiento: string; accionControl: string | null;
+}
+
+
+const NIVEL_COLOR: Record<string, string> = {
+  Crítico: "bg-red-100 text-red-700 border-red-200",
+  Alto: "bg-orange-100 text-orange-700 border-orange-200",
+  Medio: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  Bajo: "bg-green-100 text-green-700 border-green-200",
+};
+
+function RevisarRiesgosGeneradosModal({ rows: initialRows, origenMap, onClose, onApplied }: {
+  rows: GeneradoRiesgo[]; origenMap: Map<string, Foda>; onClose: () => void; onApplied: () => void;
+}) {
+  const [rows, setRows] = useState(initialRows);
+  const [selected, setSelected] = useState<Set<number>>(new Set(initialRows.map((_, i) => i)));
+  const [saving, setSaving] = useState(false);
+
+  function toggle(i: number) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  }
+
+  function updateRow(i: number, patch: Partial<GeneradoRiesgo>) {
+    setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  }
+
+  async function handleApply() {
+    const toApply = rows.filter((_, i) => selected.has(i));
+    if (toApply.length === 0) return;
+    setSaving(true);
+    await fetch("/api/estrategia-riesgos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bulk: toApply }),
+    });
+    onApplied();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+          <div>
+            <h2 className="text-base font-semibold text-zinc-900">Revisar riesgos y oportunidades sugeridos</h2>
+            <p className="text-xs text-zinc-500 mt-0.5">Ajusta probabilidad/impacto si hace falta — no se guarda nada hasta que confirmes.</p>
+          </div>
+          <span className="text-xs font-mono text-[#C41230] font-semibold shrink-0">{selected.size} de {rows.length}</span>
+        </div>
+        <div className="px-6 py-4 space-y-3 max-h-[60vh] overflow-y-auto">
+          {rows.map((r, i) => {
+            const isSelected = selected.has(i);
+            const origen = origenMap.get(r.origenFodaId);
+            const nivel = clasificar(r.probabilidad, r.impacto);
+            return (
+              <div key={i} className={`p-3 rounded-lg border text-sm transition-colors ${isSelected ? "border-[#C41230] bg-[#C41230]/5" : "border-zinc-200"}`}>
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div onClick={() => toggle(i)} className="flex items-center gap-2 flex-wrap cursor-pointer">
+                    <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${isSelected ? "bg-[#C41230] text-white" : "border border-zinc-300"}`}>
+                      {isSelected && <span className="text-[10px] leading-none">✓</span>}
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">{r.tipo}</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">{r.programa}</span>
+                    {origen && <span className="text-xs text-zinc-400">↳ {origen.cuadrante}: {origen.cuestion}</span>}
+                  </div>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border shrink-0 ${NIVEL_COLOR[nivel]}`}>{r.probabilidad}×{r.impacto}={r.probabilidad * r.impacto} — {nivel}</span>
+                </div>
+                <p className="text-sm font-medium text-zinc-800 pl-6">{r.proceso}: {r.descripcion}</p>
+                {r.accionControl && <p className="text-xs text-zinc-500 pl-6 mt-1">Acción: {r.accionControl}</p>}
+                <div className="pl-6 mt-2 flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-zinc-400 mr-1">Prob.</span>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button key={n} type="button" onClick={() => updateRow(i, { probabilidad: n })}
+                        className={`w-6 h-6 rounded text-xs font-semibold border ${r.probabilidad === n ? "bg-[#C41230] text-white border-[#C41230]" : "border-zinc-200 text-zinc-500"}`}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-zinc-400 mr-1">Imp.</span>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button key={n} type="button" onClick={() => updateRow(i, { impacto: n })}
+                        className={`w-6 h-6 rounded text-xs font-semibold border ${r.impacto === n ? "bg-[#C41230] text-white border-[#C41230]" : "border-zinc-200 text-zinc-500"}`}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-zinc-100">
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-zinc-200 hover:bg-zinc-50">Descartar todo</button>
+          <button onClick={handleApply} disabled={saving || selected.size === 0}
+            className="px-5 py-2 text-sm font-medium text-white rounded-lg bg-[#C41230] hover:bg-[#a00e26] disabled:opacity-60">
+            {saving ? "Incorporando…" : `Incorporar ${selected.size} a la matriz`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function FodaTab({ items: initial, pestel, isAdmin, onChanged, onRiesgoCreado, riesgoOrigenIds }: {
   items: Foda[]; pestel: Pestel[]; isAdmin: boolean; onChanged: (items: Foda[]) => void; onRiesgoCreado: () => void;
+  riesgoOrigenIds: Set<string>;
 }) {
   const [items, setItems] = useState<Foda[]>(initial);
   const [showNuevo, setShowNuevo] = useState(false);
@@ -264,6 +376,32 @@ export default function FodaTab({ items: initial, pestel, isAdmin, onChanged, on
   const [filSistema, setFilSistema] = useState("Todos");
   const [filAmbito, setFilAmbito] = useState("Todos");
   const [filCuadrante, setFilCuadrante] = useState("Todos");
+  const [generandoRiesgos, setGenerandoRiesgos] = useState(false);
+  const [generarRiesgosError, setGenerarRiesgosError] = useState<string | null>(null);
+  const [generados, setGenerados] = useState<GeneradoRiesgo[] | null>(null);
+
+  const pendientes = items.filter((i) => (i.cuadrante === "Oportunidad" || i.cuadrante === "Amenaza" || i.cuadrante === "Fortaleza" || i.cuadrante === "Debilidad") && !riesgoOrigenIds.has(i.id));
+
+  async function handleGenerarRiesgos() {
+    if (pendientes.length === 0) return;
+    setGenerandoRiesgos(true);
+    setGenerarRiesgosError(null);
+    const res = await fetch("/api/estrategia-riesgos/generar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: pendientes.slice(0, 15).map((f) => ({ fodaId: f.id, cuadrante: f.cuadrante, sistema: f.sistema, cuestion: f.cuestion, descripcion: f.descripcion })),
+      }),
+    });
+    if (res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setGenerados(body.rows ?? []);
+    } else {
+      const body = await res.json().catch(() => ({}));
+      setGenerarRiesgosError(body.error ?? "No se pudo generar las sugerencias.");
+    }
+    setGenerandoRiesgos(false);
+  }
 
   const filtered = items.filter((i) => {
     if (filSistema !== "Todos" && i.sistema !== filSistema) return false;
@@ -294,11 +432,20 @@ export default function FodaTab({ items: initial, pestel, isAdmin, onChanged, on
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-sm text-zinc-500">Fortalezas, Oportunidades, Debilidades y Amenazas por cuestión — promovibles a la Matriz de Riesgos y Oportunidades.</p>
         {isAdmin && (
-          <button onClick={() => setShowNuevo(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-[#C41230] hover:bg-[#a00e26]">
-            <span className="text-base leading-none">+</span> Nuevo ítem
-          </button>
+          <div className="flex gap-2">
+            {pendientes.length > 0 && (
+              <button onClick={handleGenerarRiesgos} disabled={generandoRiesgos}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg bg-[#C41230] hover:bg-[#a00e26] disabled:opacity-60">
+                <span className="text-base leading-none">✦</span> {generandoRiesgos ? "Generando…" : `Promover ${Math.min(pendientes.length, 15)} pendientes con IA`}
+              </button>
+            )}
+            <button onClick={() => setShowNuevo(true)} className="px-4 py-2 text-sm border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600">
+              + Nuevo ítem
+            </button>
+          </div>
         )}
       </div>
+      {generarRiesgosError && <p className="text-sm text-red-600">{generarRiesgosError}</p>}
 
       <div className="flex flex-wrap gap-2 items-center">
         {["Todos", ...SISTEMAS].map((s) => (
@@ -343,10 +490,14 @@ export default function FodaTab({ items: initial, pestel, isAdmin, onChanged, on
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {isAdmin && (item.cuadrante === "Oportunidad" || item.cuadrante === "Amenaza") && (
-                    <button onClick={() => setPromoviendo(item)} className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[#C41230]/30 text-[#C41230] hover:bg-[#C41230]/5">
-                      → Agregar a matriz
-                    </button>
+                  {riesgoOrigenIds.has(item.id) ? (
+                    <span className="text-xs font-medium px-2.5 py-1.5 rounded-lg text-emerald-600">✓ En matriz</span>
+                  ) : (
+                    isAdmin && (
+                      <button onClick={() => setPromoviendo(item)} className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[#C41230]/30 text-[#C41230] hover:bg-[#C41230]/5">
+                        → Agregar a matriz
+                      </button>
+                    )
                   )}
                   {isAdmin && (
                     <button onClick={() => handleDelete(item.id)} className="text-zinc-300 hover:text-red-500 text-lg leading-none">×</button>
@@ -364,6 +515,14 @@ export default function FodaTab({ items: initial, pestel, isAdmin, onChanged, on
           item={promoviendo}
           onClose={() => setPromoviendo(null)}
           onPromoted={() => { setPromoviendo(null); onRiesgoCreado(); }}
+        />
+      )}
+      {generados && (
+        <RevisarRiesgosGeneradosModal
+          rows={generados}
+          origenMap={new Map(items.map((f) => [f.id, f]))}
+          onClose={() => setGenerados(null)}
+          onApplied={() => { setGenerados(null); onRiesgoCreado(); }}
         />
       )}
     </div>

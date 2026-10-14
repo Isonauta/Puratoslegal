@@ -33,13 +33,6 @@ const CLASIF_COLOR: Record<string, string> = {
   Bajo: "bg-green-100 text-green-700 border-green-200",
 };
 
-const CLASIF_DOT: Record<string, string> = {
-  Crítico: "bg-red-500",
-  Alto: "bg-orange-400",
-  Medio: "bg-yellow-400",
-  Bajo: "bg-green-500",
-};
-
 const ESTADO_COLOR: Record<string, string> = {
   Abierto: "bg-red-50 text-red-600",
   "En tratamiento": "bg-blue-50 text-blue-600",
@@ -87,6 +80,9 @@ interface RO {
 
 // ── Matriz 5x5 visual ───────────────────────────────────────────────────────
 function MatrizRiesgo({ items }: { items: RO[] }) {
+  const [verResidual, setVerResidual] = useState(false);
+  const conResidual = items.filter(r => r.tipo === "Riesgo" && r.probabilidadR && r.impactoR).length;
+
   function cellColor(p: number, i: number) {
     const n = p * i;
     if (n >= 20) return "bg-red-500/80";
@@ -96,12 +92,32 @@ function MatrizRiesgo({ items }: { items: RO[] }) {
   }
 
   function countAt(p: number, i: number) {
-    return items.filter(r => r.tipo === "Riesgo" && r.probabilidad === p && r.impacto === i && r.estado !== "Cerrado").length;
+    return items.filter(r => {
+      if (r.tipo !== "Riesgo" || r.estado === "Cerrado") return false;
+      if (verResidual) return r.probabilidadR === p && r.impactoR === i;
+      return r.probabilidad === p && r.impacto === i;
+    }).length;
   }
 
   return (
     <div className="bg-white border border-zinc-100 rounded-xl p-4 overflow-x-auto">
-      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Matriz de Riesgos (Probabilidad × Impacto)</p>
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+          Matriz de Riesgos (Probabilidad × Impacto) — {verResidual ? "Residual (post-control)" : "Inherente"}
+        </p>
+        {conResidual > 0 && (
+          <div className="flex gap-1 text-xs">
+            <button onClick={() => setVerResidual(false)}
+              className={`px-2.5 py-1 rounded-full border transition-colors ${!verResidual ? "bg-zinc-700 text-white border-zinc-700" : "border-zinc-200 text-zinc-500"}`}>
+              Inherente
+            </button>
+            <button onClick={() => setVerResidual(true)}
+              className={`px-2.5 py-1 rounded-full border transition-colors ${verResidual ? "bg-zinc-700 text-white border-zinc-700" : "border-zinc-200 text-zinc-500"}`}>
+              Residual ({conResidual})
+            </button>
+          </div>
+        )}
+      </div>
       <div className="inline-grid gap-1" style={{ gridTemplateColumns: "auto repeat(5, 40px)" }}>
         {/* Header row */}
         <div />
@@ -328,31 +344,42 @@ function DetalleModal({ item, isAdmin, onClose, onUpdated }: {
           {item.causas && <div><p className="text-xs text-zinc-400 uppercase tracking-wide">Causas</p><p className="text-sm text-zinc-700">{item.causas}</p></div>}
           {item.consecuencias && <div><p className="text-xs text-zinc-400 uppercase tracking-wide">Consecuencias</p><p className="text-sm text-zinc-700">{item.consecuencias}</p></div>}
 
-          {/* Nivel inherente */}
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="bg-zinc-50 rounded-lg px-3 py-2">
-              <p className="text-xs text-zinc-400">Probabilidad</p>
-              <p className="text-xl font-bold text-zinc-800">{item.probabilidad}</p>
+          {/* Brecha: nivel base (inherente) vs. residual (post-control) */}
+          {item.probabilidadR && item.impactoR ? (
+            <div>
+              <p className="text-xs text-zinc-400 uppercase tracking-wide mb-2">Nivel base → Nivel residual (post-control)</p>
+              <div className="grid grid-cols-5 gap-2 items-center">
+                <div className={`col-span-2 rounded-lg px-3 py-2.5 border text-center ${CLASIF_COLOR[item.clasificacion]}`}>
+                  <p className="text-xs opacity-70">Base — P{item.probabilidad}×I{item.impacto}</p>
+                  <p className="text-xl font-bold">{item.nivelRiesgo}</p>
+                  <p className="text-xs font-semibold">{item.clasificacion}</p>
+                </div>
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-zinc-300 text-lg leading-none">→</span>
+                  <span className={`text-xs font-bold ${item.nivelRiesgo > item.probabilidadR * item.impactoR ? "text-emerald-600" : item.nivelRiesgo < item.probabilidadR * item.impactoR ? "text-red-600" : "text-zinc-400"}`}>
+                    {item.nivelRiesgo === item.probabilidadR * item.impactoR ? "=" : item.nivelRiesgo > item.probabilidadR * item.impactoR ? `↓${item.nivelRiesgo - item.probabilidadR * item.impactoR}` : `↑${item.probabilidadR * item.impactoR - item.nivelRiesgo}`}
+                  </span>
+                </div>
+                <div className={`col-span-2 rounded-lg px-3 py-2.5 border text-center ${CLASIF_COLOR[clasificar(item.probabilidadR, item.impactoR)]}`}>
+                  <p className="text-xs opacity-70">Residual — P{item.probabilidadR}×I{item.impactoR}</p>
+                  <p className="text-xl font-bold">{item.probabilidadR * item.impactoR}</p>
+                  <p className="text-xs font-semibold">{clasificar(item.probabilidadR, item.impactoR)}</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-zinc-50 rounded-lg px-3 py-2">
-              <p className="text-xs text-zinc-400">Impacto</p>
-              <p className="text-xl font-bold text-zinc-800">{item.impacto}</p>
-            </div>
-            <div className={`rounded-lg px-3 py-2 border ${CLASIF_COLOR[item.clasificacion]}`}>
-              <p className="text-xs opacity-70">Nivel</p>
-              <p className="text-xl font-bold">{item.nivelRiesgo}</p>
-            </div>
-          </div>
-
-          {/* Nivel residual si existe */}
-          {item.probabilidadR && item.impactoR && (
-            <div className="bg-zinc-50 rounded-lg px-4 py-3">
-              <p className="text-xs text-zinc-400 uppercase tracking-wide mb-2">Riesgo residual (post-control)</p>
-              <div className="flex gap-4 text-sm">
-                <span>P: <strong>{item.probabilidadR}</strong></span>
-                <span>I: <strong>{item.impactoR}</strong></span>
-                <span>Nivel: <strong>{item.probabilidadR * item.impactoR}</strong></span>
-                <span className={`font-semibold ${CLASIF_DOT[clasificar(item.probabilidadR, item.impactoR)] ? "" : ""}`}>{clasificar(item.probabilidadR, item.impactoR)}</span>
+          ) : (
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="bg-zinc-50 rounded-lg px-3 py-2">
+                <p className="text-xs text-zinc-400">Probabilidad</p>
+                <p className="text-xl font-bold text-zinc-800">{item.probabilidad}</p>
+              </div>
+              <div className="bg-zinc-50 rounded-lg px-3 py-2">
+                <p className="text-xs text-zinc-400">Impacto</p>
+                <p className="text-xl font-bold text-zinc-800">{item.impacto}</p>
+              </div>
+              <div className={`rounded-lg px-3 py-2 border ${CLASIF_COLOR[item.clasificacion]}`}>
+                <p className="text-xs opacity-70">Nivel</p>
+                <p className="text-xl font-bold">{item.nivelRiesgo}</p>
               </div>
             </div>
           )}
@@ -574,7 +601,17 @@ export default function EstrategiaRiesgosClient({ items: initial, isAdmin }: { i
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${CLASIF_COLOR[item.clasificacion]}`}>{item.clasificacion}</span>
-                  <span className="text-xs text-zinc-400 font-semibold">{item.probabilidad} × {item.impacto} = {item.nivelRiesgo}</span>
+                  {item.probabilidadR && item.impactoR ? (
+                    <span className="text-xs text-zinc-400 font-semibold flex items-center gap-1">
+                      {item.nivelRiesgo}
+                      <span className="text-zinc-300">→</span>
+                      <span className={CLASIF_COLOR[clasificar(item.probabilidadR, item.impactoR)].split(" ")[1]}>
+                        {item.probabilidadR * item.impactoR}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-xs text-zinc-400 font-semibold">{item.probabilidad} × {item.impacto} = {item.nivelRiesgo}</span>
+                  )}
                   {item.tratamiento && <span className="text-xs text-zinc-400">{item.tratamiento}</span>}
                 </div>
               </div>

@@ -884,6 +884,26 @@ model FodaItem {
   riesgos        RiesgoOportunidad[]
 }
 
+// Estrategias CAME (Corregir/Afrontar/Mantener/Explotar — cruce de la matriz
+// FODA por cuadrantes: FO, FA, DO, DA). Cláusula 6.1 ISO 9001 — complementa
+// la conversión directa FODA→Riesgo/Oportunidad con un paso estratégico
+// intermedio, antes de que un ítem FODA se traduzca en un riesgo u
+// oportunidad a tratar.
+model CameEstrategia {
+  id          String   @id @default(cuid())
+  numero      Int      @default(autoincrement())
+  sistema     String   @default("SST") // SST | MA
+  tipo        String   // FO | FA | DO | DA
+  titulo      String
+  descripcion String
+  itemsFoda   String?  // referencia textual a los ítems FODA que cruza
+  responsable String?
+  prioridad   String   @default("Media") // Alta | Media | Baja
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model NoConformidad {
   id             String   @id @default(cuid())
   numero         Int      @default(autoincrement())

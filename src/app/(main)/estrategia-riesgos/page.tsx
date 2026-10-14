@@ -8,7 +8,7 @@ export default async function EstrategiaRiesgosPage() {
   const session = await getSession();
   const isAdmin = session?.isAdmin ?? false;
 
-  const [rawRiesgos, rawPestel, rawFoda, partesInteresadas, contextoConfig, rawClimatica] = await Promise.all([
+  const [rawRiesgos, rawPestel, rawFoda, rawCame, partesInteresadas, contextoConfig, rawClimatica] = await Promise.all([
     prisma.riesgoOportunidad.findMany({
       include: { origenFoda: true },
       orderBy: [{ nivelRiesgo: "desc" }, { createdAt: "desc" }],
@@ -18,6 +18,7 @@ export default async function EstrategiaRiesgosPage() {
       include: { origenPestel: true },
       orderBy: [{ cuestion: "asc" }, { createdAt: "desc" }],
     }),
+    prisma.cameEstrategia.findMany({ orderBy: [{ tipo: "asc" }, { createdAt: "desc" }] }),
     prisma.parteInteresada.findMany({ orderBy: [{ createdAt: "asc" }] }),
     prisma.siteConfig.findMany({ where: { key: { startsWith: "contexto." } } }),
     prisma.determinacionClimatica.findMany({ orderBy: [{ fecha: "desc" }] }),
@@ -62,11 +63,18 @@ export default async function EstrategiaRiesgosPage() {
     updatedAt: d.updatedAt.toISOString(),
   }));
 
+  const came = rawCame.map((c) => ({
+    ...c,
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.updatedAt.toISOString(),
+  }));
+
   return (
     <ContextoClient
       riesgos={riesgos}
       pestel={pestel}
       foda={foda}
+      came={came}
       partesInteresadas={partesInteresadas}
       contexto={contexto}
       climatica={climatica}
