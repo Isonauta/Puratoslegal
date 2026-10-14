@@ -18,14 +18,16 @@ import {
   getNearMissSummary,
 } from "@/lib/queries";
 import { AccidentBanner } from "@/components/AccidentBanner";
+import { WeatherCard } from "@/components/WeatherCard";
 import { isNearMissReviewer } from "@/lib/nearMiss";
+import { getWeatherNow } from "@/lib/weather";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const session = await getSession();
   const isReviewer = isNearMissReviewer(session?.email);
-  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks, sigStats, accidentes, objSummary, ncSummary, nearMissSummary] = await Promise.all([
+  const [byAmbito, overall, nonCompliant, actionPlans, evidence, permits, responsablesSummary, myTasks, sigStats, accidentes, objSummary, ncSummary, nearMissSummary, weather] = await Promise.all([
     getComplianceByAmbito(),
     getOverallCompliance(),
     getNonCompliantRequirements(),
@@ -39,6 +41,7 @@ export default async function DashboardPage() {
     getObjetivosIndicadoresSummary(),
     getNoConformidadesSummary(),
     isReviewer ? getNearMissSummary() : Promise.resolve(null),
+    getWeatherNow(),
   ]);
 
   return (
@@ -57,6 +60,8 @@ export default async function DashboardPage() {
             isAdmin={session?.isAdmin ?? false}
           />
         )}
+
+        {weather && <WeatherCard weather={weather} />}
 
         {/* Near Miss — visible solo para el equipo de triage asignado */}
         {isReviewer && nearMissSummary && nearMissSummary.abiertosTotal > 0 && (
