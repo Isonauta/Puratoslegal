@@ -8,14 +8,16 @@ import CameTab, { type Came } from "./CameTab";
 import ContextoTab, { type Contexto } from "./ContextoTab";
 import PartesInteresadasTab, { type ParteInteresada } from "./PartesInteresadasTab";
 import CambioClimaticoTab, { type Determinacion } from "./CambioClimaticoTab";
+import TiempoMeteorologicoTab from "./TiempoMeteorologicoTab";
 import ImportarContextoModal from "./ImportarContextoModal";
+import type { ClimaPartesResultado } from "@/lib/climaPartesInteresadas";
 
 type RO = Parameters<typeof EstrategiaRiesgosClient>[0]["items"][number];
 
-const TABS = ["Contexto", "Partes Interesadas", "Cambio Climático", "PESTEL", "FODA", "CAME", "Matriz de riesgos"] as const;
+const TABS = ["Contexto", "Partes Interesadas", "Cambio Climático", "Tiempo meteorológico", "PESTEL", "FODA", "CAME", "Matriz de riesgos"] as const;
 
-export default function ContextoClient({ riesgos, pestel, foda, came, partesInteresadas, contexto: contextoInicial, climatica, isAdmin }: {
-  riesgos: RO[]; pestel: Pestel[]; foda: Foda[]; came: Came[]; partesInteresadas: ParteInteresada[]; contexto: Contexto; climatica: Determinacion[]; isAdmin: boolean;
+export default function ContextoClient({ riesgos, pestel, foda, came, partesInteresadas, contexto: contextoInicial, climatica, climaPartes, isAdmin }: {
+  riesgos: RO[]; pestel: Pestel[]; foda: Foda[]; came: Came[]; partesInteresadas: ParteInteresada[]; contexto: Contexto; climatica: Determinacion[]; climaPartes: ClimaPartesResultado; isAdmin: boolean;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Contexto");
   const [contexto, setContexto] = useState(contextoInicial);
@@ -72,6 +74,10 @@ export default function ContextoClient({ riesgos, pestel, foda, came, partesInte
 
       {tab === "Cambio Climático" && (
         <CambioClimaticoTab items={climaticaItems} isAdmin={isAdmin} onChanged={setClimaticaItems} contexto={contexto} />
+      )}
+
+      {tab === "Tiempo meteorológico" && (
+        <TiempoMeteorologicoTab weather={climaPartes.weather} condicionesActivas={climaPartes.condicionesActivas} analisis={climaPartes.analisis} error={climaPartes.error} />
       )}
 
       {tab === "PESTEL" && (

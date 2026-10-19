@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { getAnalisisClimaPartesInteresadas } from "@/lib/climaPartesInteresadas";
 import ContextoClient from "./ContextoClient";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export default async function EstrategiaRiesgosPage() {
   const session = await getSession();
   const isAdmin = session?.isAdmin ?? false;
 
-  const [rawRiesgos, rawPestel, rawFoda, rawCame, partesInteresadas, contextoConfig, rawClimatica] = await Promise.all([
+  const [rawRiesgos, rawPestel, rawFoda, rawCame, partesInteresadas, contextoConfig, rawClimatica, climaPartes] = await Promise.all([
     prisma.riesgoOportunidad.findMany({
       include: { origenFoda: true },
       orderBy: [{ nivelRiesgo: "desc" }, { createdAt: "desc" }],
@@ -22,6 +23,7 @@ export default async function EstrategiaRiesgosPage() {
     prisma.parteInteresada.findMany({ orderBy: [{ createdAt: "asc" }] }),
     prisma.siteConfig.findMany({ where: { key: { startsWith: "contexto." } } }),
     prisma.determinacionClimatica.findMany({ orderBy: [{ fecha: "desc" }] }),
+    getAnalisisClimaPartesInteresadas(),
   ]);
 
   // Valores por defecto tomados del alcance real del SIG (SIG-R-100) —
@@ -78,6 +80,7 @@ export default async function EstrategiaRiesgosPage() {
       partesInteresadas={partesInteresadas}
       contexto={contexto}
       climatica={climatica}
+      climaPartes={climaPartes}
       isAdmin={isAdmin}
     />
   );
