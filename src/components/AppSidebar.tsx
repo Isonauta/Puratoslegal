@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -259,32 +260,16 @@ const sections: NavSection[] = [
   return sections;
 }
 
-export default function AppSidebar({ userName, isAdmin, isNearMissReviewer, badges }: AppSidebarProps) {
-  const sections = buildSections(badges, isNearMissReviewer ?? false);
-  const pathname = usePathname();
-
-  function isActive(href: string, exact?: boolean) {
-    if (exact) return pathname === href;
-    return pathname === href || pathname.startsWith(href + "/");
-  }
-
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
-  }
-
+function SidebarNav({ sections, isActive, userName, onLogout, onNavigate }: {
+  sections: NavSection[];
+  isActive: (href: string, exact?: boolean) => boolean;
+  userName?: string;
+  onLogout: () => void;
+  onNavigate?: () => void;
+}) {
   return (
-    <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 min-h-screen sticky top-0 h-screen overflow-y-auto">
-      {/* Brand */}
-      <div className="px-4 py-5 border-b border-zinc-100 dark:border-zinc-800">
-        <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
-          Isosafe<span className="text-[#C41230]"> Chile</span>
-        </span>
-        <p className="text-[10px] text-zinc-400 mt-0.5 uppercase tracking-widest">Sistema de Gestión</p>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-5">
+    <>
+      <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
         {sections.map((section) => (
           <div key={section.label}>
             <p className="px-2 mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
@@ -297,6 +282,7 @@ export default function AppSidebar({ userName, isAdmin, isNearMissReviewer, badg
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      onClick={onNavigate}
                       className={`flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
                         active
                           ? "bg-[#C41230] text-white"
@@ -340,12 +326,98 @@ export default function AppSidebar({ userName, isAdmin, isNearMissReviewer, badg
           <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate mb-2">{userName}</p>
         )}
         <button
-          onClick={handleLogout}
+          onClick={onLogout}
           className="w-full text-left text-xs text-zinc-400 hover:text-[#C41230] transition-colors"
         >
           Cerrar sesión →
         </button>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export default function AppSidebar({ userName, isAdmin, isNearMissReviewer, badges }: AppSidebarProps) {
+  const sections = buildSections(badges, isNearMissReviewer ?? false);
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  function isActive(href: string, exact?: boolean) {
+    if (exact) return pathname === href;
+    return pathname === href || pathname.startsWith(href + "/");
+  }
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
+  const brand = (
+    <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
+      Isosafe<span className="text-[#C41230]"> Chile</span>
+    </span>
+  );
+
+  return (
+    <>
+      {/* Mobile topbar */}
+      <div className="md:hidden flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 sticky top-0 z-30">
+        <button
+          onClick={() => setMobileOpen(true)}
+          aria-label="Abrir menú"
+          className="p-1.5 -ml-1.5 text-zinc-600 dark:text-zinc-300"
+        >
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        {brand}
+        <span className="w-6" />
+      </div>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-40 flex">
+          <div
+            className="fixed inset-0 bg-black/40"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="relative flex flex-col w-64 max-w-[85vw] h-full bg-white dark:bg-zinc-900 shadow-xl">
+            <div className="flex items-center justify-between px-4 py-5 border-b border-zinc-100 dark:border-zinc-800">
+              <div>
+                {brand}
+                <p className="text-[10px] text-zinc-400 mt-0.5 uppercase tracking-widest">Sistema de Gestión</p>
+              </div>
+              <button
+                onClick={() => setMobileOpen(false)}
+                aria-label="Cerrar menú"
+                className="p-1 text-zinc-400 hover:text-zinc-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <SidebarNav
+              sections={sections}
+              isActive={isActive}
+              userName={userName}
+              onLogout={handleLogout}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          </aside>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 min-h-screen sticky top-0 h-screen overflow-y-auto">
+        {/* Brand */}
+        <div className="px-4 py-5 border-b border-zinc-100 dark:border-zinc-800">
+          {brand}
+          <p className="text-[10px] text-zinc-400 mt-0.5 uppercase tracking-widest">Sistema de Gestión</p>
+        </div>
+
+        <SidebarNav sections={sections} isActive={isActive} userName={userName} onLogout={handleLogout} />
+      </aside>
+    </>
   );
 }
