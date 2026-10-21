@@ -321,10 +321,17 @@ function SidebarNav({ sections, isActive, userName, onLogout, onNavigate }: {
       </nav>
 
       {/* User footer */}
-      <div className="border-t border-zinc-100 dark:border-zinc-800 px-4 py-3">
+      <div className="border-t border-zinc-100 dark:border-zinc-800 px-4 py-3 space-y-1.5">
         {userName && (
-          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate mb-2">{userName}</p>
+          <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 truncate mb-1">{userName}</p>
         )}
+        <Link
+          href="/cuenta"
+          onClick={onNavigate}
+          className="block text-xs text-zinc-400 hover:text-[#C41230] transition-colors"
+        >
+          Mi cuenta
+        </Link>
         <button
           onClick={onLogout}
           className="w-full text-left text-xs text-zinc-400 hover:text-[#C41230] transition-colors"
