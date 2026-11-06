@@ -97,6 +97,7 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
   const [sinCambios, setSinCambios] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [filter, setFilter] = useState<DocStatus | "TODOS">("TODOS");
   const [q, setQ] = useState("");
   const [filterTipo, setFilterTipo] = useState("");
@@ -325,20 +326,33 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
                 ))}
               </div>
 
-              {/* Document link */}
-              {(selected.publicUrl || selected.linkUrl) && (
-                <a
-                  href={selected.publicUrl ?? selected.linkUrl ?? "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-[#C41230] hover:underline"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  Ver documento
-                </a>
-              )}
+              {/* Document link + edit button */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {(selected.publicUrl || selected.linkUrl) && (
+                  <a
+                    href={selected.publicUrl ?? selected.linkUrl ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm text-[#C41230] hover:underline"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Ver documento
+                  </a>
+                )}
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowEdit(true)}
+                    className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Editar documento
+                  </button>
+                )}
+              </div>
 
               {/* Vigente banner */}
               {selected.status === "VIGENTE" && selected.vigenciaDesde && (() => {
@@ -538,6 +552,148 @@ export default function SigDocumentosClient({ initialDocs, userEmail, isAdmin }:
           }}
         />
       )}
+
+      {/* Edit document modal */}
+      {showEdit && selected && (
+        <EditDocModal
+          doc={selected}
+          onClose={() => setShowEdit(false)}
+          onSaved={(updated) => {
+            setDocs((prev) => prev.map((d) => (d.id === updated.id ? { ...d, ...updated } : d)));
+            setSelected((prev) => (prev ? { ...prev, ...updated } : null));
+            setShowEdit(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditDocModal({ doc, onClose, onSaved }: { doc: Documento; onClose: () => void; onSaved: (doc: Documento) => void }) {
+  const [form, setForm] = useState({
+    nombre: doc.nombre,
+    clausula: doc.clausula,
+    clausulaNombre: doc.clausulaNombre ?? "",
+    norma: doc.norma,
+    tipo: doc.tipo,
+    versionCode: doc.versionCode ?? "",
+    descripcion: doc.descripcion ?? "",
+    linkUrl: doc.linkUrl ?? "",
+    publicUrl: doc.publicUrl ?? "",
+    elaboradorNombre: doc.elaboradorNombre ?? "",
+    elaboradorEmail: doc.elaboradorEmail ?? "",
+    revisorNombre: doc.revisorNombre ?? "",
+    revisorEmail: doc.revisorEmail ?? "",
+    aprobadorNombre: doc.aprobadorNombre ?? "",
+    aprobadorEmail: doc.aprobadorEmail ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  function set(k: string, v: string) { setForm((p) => ({ ...p, [k]: v })); }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/sig/documentos/${doc.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) { alert("Error al guardar cambios"); return; }
+      const updated = await res.json();
+      onSaved(updated);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+        <div className="px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Editar documento</h2>
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-700 text-xl">×</button>
+        </div>
+        <form onSubmit={submit} className="px-6 py-5 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Cláusula</label>
+              <input value={form.clausula} onChange={(e) => set("clausula", e.target.value)} required
+                className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41230]" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Nombre cláusula</label>
+              <input value={form.clausulaNombre} onChange={(e) => set("clausulaNombre", e.target.value)}
+                className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41230]" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Nombre del documento</label>
+            <input value={form.nombre} onChange={(e) => set("nombre", e.target.value)} required
+              className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41230]" />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Tipo</label>
+              <select value={form.tipo} onChange={(e) => set("tipo", e.target.value)}
+                className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41230]">
+                <option>Procedimiento</option><option>Matriz</option><option>Registro</option><option>Instructivo</option><option>Otro</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Norma</label>
+              <select value={form.norma} onChange={(e) => set("norma", e.target.value)}
+                className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41230]">
+                <option value="ISO45001">ISO 45001</option><option value="ISO14001">ISO 14001</option><option value="AMBAS">Ambas</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Versión</label>
+              <input value={form.versionCode} onChange={(e) => set("versionCode", e.target.value)}
+                className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41230]" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Link del documento</label>
+            <p className="text-xs text-zinc-400 mb-1">URL de SharePoint, Google Drive u otro. Aparece como "Ver documento".</p>
+            <input value={form.linkUrl} onChange={(e) => set("linkUrl", e.target.value)} type="url"
+              placeholder="https://..."
+              className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41230]" />
+          </div>
+
+          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide pt-2">Roles del flujo</p>
+          {[
+            { role: "Elaborador", emailKey: "elaboradorEmail", nameKey: "elaboradorNombre" },
+            { role: "Revisor", emailKey: "revisorEmail", nameKey: "revisorNombre" },
+            { role: "Aprobador", emailKey: "aprobadorEmail", nameKey: "aprobadorNombre" },
+          ].map(({ role, emailKey, nameKey }) => (
+            <div key={role} className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-zinc-400">{role} — nombre</label>
+                <input value={form[nameKey as keyof typeof form]} onChange={(e) => set(nameKey, e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41230]" />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-400">{role} — email</label>
+                <input type="email" value={form[emailKey as keyof typeof form]} onChange={(e) => set(emailKey, e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41230]" />
+              </div>
+            </div>
+          ))}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-zinc-600 hover:text-zinc-900">Cancelar</button>
+            <button type="submit" disabled={saving}
+              className="bg-[#C41230] hover:bg-[#9B0E26] text-white text-sm font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-colors">
+              {saving ? "Guardando..." : "Guardar cambios"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
