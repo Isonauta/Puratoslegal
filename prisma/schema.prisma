@@ -1048,3 +1048,85 @@ model CambioHistorial {
   realizadoPor   String?
   createdAt      DateTime @default(now())
 }
+
+// =============================================================================
+// Madurez OpX — "OpX Maturity Pyramid" (framework Puratos, pilar Health and
+// Safety). MaturityItem/MaturityCriterio son datos de referencia del
+// framework (24 ítems x 5 criterios de madurez cada uno: Defined/Developed/
+// Installed/Mastered/Sustained), sembrados una sola vez desde la planilla
+// fuente — no se editan desde la UI. Cada MaturityEvaluacion es un snapshot
+// fechado (As Is o To Be) con una MaturityRespuesta por criterio; el
+// historial de evolución en el tiempo es, por diseño, la lista de
+// evaluaciones As Is sucesivas.
+// =============================================================================
+
+enum MaturityEvalTipo {
+  AS_IS
+  TO_BE
+}
+
+model MaturityItem {
+  id         String   @id @default(cuid())
+  codigo     String   @unique // "1.1"
+  titulo     String
+  workstream String   // Systems | Risk | Compliance | Culture | Performance
+  nivel      Int      // 1 (Basics) .. 4 (Culture) -- nivel de la pirámide
+  orden      Int      // orden del ítem dentro de su nivel
+  frecuencia String?  // Yearly | Quarterly | ...
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  criterios  MaturityCriterio[]
+  respuestas MaturityRespuesta[]
+
+  @@index([nivel])
+}
+
+model MaturityCriterio {
+  id         String   @id @default(cuid())
+  itemId     String
+  item       MaturityItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  paso       Int      // 1..5
+  nombrePaso String   // Defined | Developed | Installed | Mastered | Sustained
+  textoEn    String
+  textoEs    String
+  createdAt  DateTime @default(now())
+
+  respuestas MaturityRespuesta[]
+
+  @@unique([itemId, paso])
+}
+
+model MaturityEvaluacion {
+  id         String           @id @default(cuid())
+  tipo       MaturityEvalTipo @default(AS_IS)
+  fecha      DateTime         @default(now())
+  planta     String?
+  evaluador  String?
+  comentario String?
+  createdBy  String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  respuestas MaturityRespuesta[]
+
+  @@index([tipo, fecha])
+}
+
+model MaturityRespuesta {
+  id            String   @id @default(cuid())
+  evaluacionId  String
+  evaluacion    MaturityEvaluacion @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+  criterioId    String
+  criterio      MaturityCriterio   @relation(fields: [criterioId], references: [id], onDelete: Cascade)
+  itemId        String
+  item          MaturityItem       @relation(fields: [itemId], references: [id])
+  valor         Float?   // null = N.E. (no evaluado) | 0 | 0.5 | 1
+  observaciones String?
+  updatedBy     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([evaluacionId, criterioId])
+  @@index([evaluacionId])
+}

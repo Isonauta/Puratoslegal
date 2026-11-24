@@ -144,6 +144,16 @@ const sections: NavSection[] = [
         ),
       },
       {
+        href: "/madurez",
+        label: "Madurez OpX",
+        icon: (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 18H3L12 3z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 13.5h9M9.5 9.5h5" />
+          </svg>
+        ),
+      },
+      {
         href: "/objetivos-indicadores",
         label: "Objetivos e Indicadores",
         icon: (
