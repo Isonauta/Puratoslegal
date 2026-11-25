@@ -43,14 +43,19 @@ export function respuestaMapFor(respuestas: Respuesta[]): Map<string, Respuesta>
   return new Map(respuestas.map((r) => [r.criterioId, r]));
 }
 
-// Promedio (0-100) de los criterios contestados de un ítem. Los criterios
-// sin respuesta (N.E.) no entran al promedio — null si ninguno fue contestado.
+// Porcentaje (0-100) de un ítem sobre sus 5 criterios. Un criterio sin
+// respuesta (N.E.) cuenta como 0 en la suma (no se excluye del promedio) —
+// de lo contrario, marcar un solo criterio en "1" y dejar los otros 4 sin
+// contestar haría saltar el ítem a 100% de inmediato. Solo cuando NINGÚN
+// criterio fue contestado el ítem se considera "Sin evaluar" (null) en vez
+// de 0%, ya que son estados distintos: "no sabemos" vs "lo evaluamos y no
+// cumple nada".
 export function itemScore(item: Item, respuestaMap: Map<string, Respuesta>): number | null {
-  const valores = item.criterios
-    .map((c) => respuestaMap.get(c.id)?.valor)
-    .filter((v): v is number => v !== null && v !== undefined);
-  const m = mean(valores);
-  return m === null ? null : m * 100;
+  const valores = item.criterios.map((c) => respuestaMap.get(c.id)?.valor);
+  const contestados = valores.filter((v): v is number => v !== null && v !== undefined);
+  if (contestados.length === 0) return null;
+  const suma = valores.reduce((acc: number, v) => acc + (v ?? 0), 0);
+  return (suma / item.criterios.length) * 100;
 }
 
 export function nivelScore(items: Item[], nivel: number, respuestaMap: Map<string, Respuesta>): number | null {
