@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  banda, itemScore, nivelScore, workstreamScore, overallScore, respuestaMapFor,
+  banda, itemScore, workstreamScore, overallScore, respuestaMapFor,
   NIVEL_LABELS, type Item, type Respuesta,
 } from "@/lib/madurez";
 
@@ -53,27 +53,41 @@ export default function DashboardMadurez({ items, asIsRespuestas, toBeRespuestas
         </div>
       </div>
 
-      {/* Pirámide por nivel */}
+      {/* Pirámide por nivel — un cuadro por ítem, igual que la planilla
+          fuente: cada fila de la pirámide es un item por workstream (no un
+          solo score agregado), apilados del Nivel 1 (base, más ítems) al
+          Nivel 4 (cima). El color de fondo es la banda As Is; el borde es
+          la banda To Be, para ver de un vistazo dónde la meta y lo actual
+          no coinciden. */}
       <div>
-        <p className="text-sm font-semibold text-zinc-800 mb-3">Pirámide de madurez por nivel</p>
-        <div className="space-y-2">
+        <p className="text-sm font-semibold text-zinc-800 mb-1">Pirámide de madurez</p>
+        <p className="text-xs text-zinc-400 mb-3">Cada casillero es un ítem del nivel — relleno = score As Is, borde = meta To Be.</p>
+        <div className="flex flex-col items-center gap-2 py-2">
           {[4, 3, 2, 1].map((nivel) => {
-            const asIs = nivelScore(items, nivel, asIsMap);
-            const toBe = nivelScore(items, nivel, toBeMap);
-            const b = banda(asIs);
-            const widthPct = 40 + (4 - nivel) * 15; // forma de pirámide (nivel 1 más ancho)
+            const nivelItems = items.filter((it) => it.nivel === nivel).sort((a, b) => a.orden - b.orden);
             return (
-              <div key={nivel} className="flex items-center gap-3">
-                <div className="w-28 shrink-0 text-right">
+              <div key={nivel} className="flex items-center gap-3 w-full justify-center">
+                <div className="w-24 shrink-0 text-right">
                   <p className="text-xs font-semibold text-zinc-700">Nivel {nivel}</p>
                   <p className="text-[10px] text-zinc-400">{NIVEL_LABELS[nivel]}</p>
                 </div>
-                <div className="flex-1 relative h-9 bg-zinc-50 rounded-lg overflow-hidden" style={{ maxWidth: `${widthPct}%` }}>
-                  <div className={`absolute inset-y-0 left-0 ${b.dot} opacity-80`} style={{ width: asIs === null ? "0%" : `${asIs}%` }} />
-                  <div className="absolute inset-0 flex items-center justify-between px-3">
-                    <span className="text-xs font-bold text-zinc-700 mix-blend-multiply">{pct(asIs)}</span>
-                    <span className="text-[10px] text-zinc-400">meta {pct(toBe)}</span>
-                  </div>
+                <div className="flex gap-1.5">
+                  {nivelItems.map((it) => {
+                    const asIs = itemScore(it, asIsMap);
+                    const toBe = itemScore(it, toBeMap);
+                    const bAsIs = banda(asIs);
+                    const bToBe = banda(toBe);
+                    return (
+                      <div
+                        key={it.id}
+                        title={`${it.codigo} ${it.titulo} — As Is: ${pct(asIs)} (${bAsIs.label}) · To Be: ${pct(toBe)} (${bToBe.label})`}
+                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-md border-2 flex flex-col items-center justify-center cursor-default ${bAsIs.bg} ${bToBe.border}`}
+                      >
+                        <span className="text-[10px] font-mono text-zinc-500">{it.codigo}</span>
+                        <span className={`text-xs font-bold ${bAsIs.text}`}>{asIs === null ? "—" : `${Math.round(asIs)}%`}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );

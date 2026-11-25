@@ -15,19 +15,23 @@ export type Criterio = { id: string; itemId: string; paso: number; nombrePaso: s
 export type Item = { id: string; codigo: string; titulo: string; workstream: string; nivel: number; orden: number; frecuencia: string | null; criterios: Criterio[] };
 export type Respuesta = { id: string; evaluacionId: string; criterioId: string; itemId: string; valor: number | null; observaciones: string | null };
 
-export type Banda = { label: string; dot: string; bg: string; text: string };
+export type Banda = { label: string; dot: string; border: string; bg: string; text: string };
 
 // Bandas calcadas de la planilla fuente (fila 28 de "OpX Pyramid - As Is"):
 // Not Evaluated | <20% No standard | 20-40% Defined | 40-60% Developed |
 // 60-80% Installed | 80-100% Mastered | 100% Sustained.
+// `border` se declara aparte (en vez de derivarlo de `dot` con un reemplazo
+// de string) porque Tailwind sólo genera el CSS de las clases que aparecen
+// literalmente en el código fuente — una clase armada en runtime no se
+// incluiría en el build.
 export function banda(pct: number | null): Banda {
-  if (pct === null) return { label: "Sin evaluar", dot: "bg-zinc-300", bg: "bg-zinc-50", text: "text-zinc-500" };
-  if (pct >= 100) return { label: "Sostenido", dot: "bg-emerald-600", bg: "bg-emerald-50", text: "text-emerald-700" };
-  if (pct >= 80) return { label: "Dominado", dot: "bg-emerald-400", bg: "bg-emerald-50/60", text: "text-emerald-600" };
-  if (pct >= 60) return { label: "Instalado", dot: "bg-amber-400", bg: "bg-amber-50", text: "text-amber-600" };
-  if (pct >= 40) return { label: "Desarrollado", dot: "bg-orange-400", bg: "bg-orange-50", text: "text-orange-600" };
-  if (pct >= 20) return { label: "Definido", dot: "bg-orange-500", bg: "bg-orange-50", text: "text-orange-700" };
-  return { label: "Sin estándar", dot: "bg-red-500", bg: "bg-red-50", text: "text-red-600" };
+  if (pct === null) return { label: "Sin evaluar", dot: "bg-zinc-300", border: "border-zinc-300", bg: "bg-zinc-50", text: "text-zinc-500" };
+  if (pct >= 100) return { label: "Sostenido", dot: "bg-emerald-600", border: "border-emerald-600", bg: "bg-emerald-50", text: "text-emerald-700" };
+  if (pct >= 80) return { label: "Dominado", dot: "bg-emerald-400", border: "border-emerald-400", bg: "bg-emerald-50/60", text: "text-emerald-600" };
+  if (pct >= 60) return { label: "Instalado", dot: "bg-amber-400", border: "border-amber-400", bg: "bg-amber-50", text: "text-amber-600" };
+  if (pct >= 40) return { label: "Desarrollado", dot: "bg-orange-400", border: "border-orange-400", bg: "bg-orange-50", text: "text-orange-600" };
+  if (pct >= 20) return { label: "Definido", dot: "bg-orange-500", border: "border-orange-500", bg: "bg-orange-50", text: "text-orange-700" };
+  return { label: "Sin estándar", dot: "bg-red-500", border: "border-red-500", bg: "bg-red-50", text: "text-red-600" };
 }
 
 function mean(vals: number[]): number | null {
